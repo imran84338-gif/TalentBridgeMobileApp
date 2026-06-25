@@ -1,0 +1,4673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0A2D73">
+  <title>TalentBridge - Learn, Hire, Earn, and Connect</title>
+  <style>
+    /*
+      TalentBridge single-file prototype.
+      The app is intentionally self-contained: no server, no build step,
+      no external images, and no third-party libraries.
+    */
+
+    :root {
+      --navy: #0A2D73;
+      --navy-2: #071f52;
+      --navy-soft: #eaf0ff;
+      --gold: #FFA500;
+      --gold-2: #ffc75a;
+      --ink: #12213f;
+      --muted: #61708c;
+      --line: #dde4f2;
+      --surface: #ffffff;
+      --surface-2: #f7f9fe;
+      --surface-3: #eef3fb;
+      --success: #1c9b62;
+      --danger: #dc3b3b;
+      --warning: #b87300;
+      --info: #2672d9;
+      --shadow: 0 18px 48px rgba(10, 45, 115, 0.14);
+      --shadow-soft: 0 10px 28px rgba(10, 45, 115, 0.10);
+      --glass: rgba(255, 255, 255, 0.78);
+      --radius: 8px;
+      --button-radius: 999px;
+      --nav-height: 76px;
+      --header-height: 68px;
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    [data-theme="dark"] {
+      --navy: #82a8ff;
+      --navy-2: #d5e2ff;
+      --navy-soft: rgba(130, 168, 255, 0.12);
+      --gold: #ffb22c;
+      --gold-2: #ffd079;
+      --ink: #edf4ff;
+      --muted: #a8b5c9;
+      --line: rgba(220, 230, 255, 0.15);
+      --surface: #0c1322;
+      --surface-2: #111b2f;
+      --surface-3: #182642;
+      --success: #41d28b;
+      --danger: #ff6b6b;
+      --warning: #ffc166;
+      --info: #79adff;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.34);
+      --shadow-soft: 0 10px 28px rgba(0, 0, 0, 0.22);
+      --glass: rgba(17, 27, 47, 0.82);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--surface-2);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(255, 165, 0, 0.14), transparent 32%),
+        linear-gradient(180deg, var(--surface-2), var(--surface));
+      font-family: var(--font);
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    body.no-scroll {
+      overflow: hidden;
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button {
+      border: 0;
+      cursor: pointer;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      padding-bottom: calc(var(--nav-height) + var(--safe-bottom));
+    }
+
+    body.auth-mode .app-shell {
+      padding-bottom: 0;
+    }
+
+    .screen {
+      display: none;
+      min-height: 100vh;
+      animation: pageIn 0.34s ease both;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .auth-screen,
+    .splash-screen {
+      padding: 18px;
+    }
+
+    .auth-screen {
+      place-items: center;
+      min-height: 100svh;
+      background:
+        radial-gradient(circle at 16% 18%, rgba(255, 165, 0, 0.18), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(10, 45, 115, 0.14), transparent 30%),
+        linear-gradient(135deg, rgba(255, 251, 244, 0.96), rgba(245, 248, 255, 0.98));
+      overflow-y: auto;
+    }
+
+    [data-theme="dark"] .auth-screen {
+      background:
+        radial-gradient(circle at 16% 18%, rgba(255, 165, 0, 0.14), transparent 28%),
+        radial-gradient(circle at 84% 18%, rgba(130, 168, 255, 0.16), transparent 30%),
+        linear-gradient(135deg, #07101f, #0c1730);
+    }
+
+    .auth-screen.active {
+      display: grid;
+    }
+
+    .splash-screen {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at 50% 30%, rgba(255, 197, 90, 0.35), transparent 34%),
+        linear-gradient(150deg, #071f52 0%, #0A2D73 56%, #103a8c 100%);
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .splash-screen.hidden {
+      pointer-events: none;
+      animation: splashOut 0.52s ease forwards;
+    }
+
+    .splash-card {
+      width: min(86vw, 320px);
+      display: grid;
+      justify-items: center;
+      gap: 20px;
+      padding: 24px 20px;
+      text-align: center;
+      transform-origin: center;
+      animation: logoReveal 1.05s cubic-bezier(0.17, 0.67, 0.25, 1.18) both;
+    }
+
+    .splash-logo-wrap {
+      width: 100%;
+      display: grid;
+      justify-items: center;
+    }
+
+    .brand-logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .brand-mark {
+      width: 46px;
+      height: 46px;
+      display: block;
+      flex: 0 0 auto;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #ffffff;
+      box-shadow: 0 14px 32px rgba(0, 0, 0, 0.16);
+    }
+
+    .brand-mark.large {
+      width: min(68vw, 250px);
+      height: auto;
+      border-radius: 16px;
+      padding: 8px;
+      box-shadow: 0 22px 52px rgba(0, 0, 0, 0.2);
+    }
+
+    .brand-mark.auth-logo {
+      width: 72px;
+      height: 44px;
+      padding: 4px;
+      box-shadow: 0 10px 22px rgba(10, 45, 115, 0.12);
+    }
+
+    .brand-mark.header-logo {
+      width: 116px;
+      height: 44px;
+      padding: 4px;
+    }
+
+    .brand-copy {
+      display: grid;
+      line-height: 1.05;
+      min-width: 0;
+    }
+
+    .brand-name {
+      color: var(--ink);
+      font-size: 21px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .splash-screen .brand-name {
+      color: #ffffff;
+      font-size: 34px;
+    }
+
+    .brand-slogan {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+      white-space: nowrap;
+    }
+
+    .splash-screen .brand-slogan {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 12px;
+      margin-top: 7px;
+    }
+
+    .loader-line {
+      width: 144px;
+      height: 4px;
+      border-radius: var(--button-radius);
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .loader-line span {
+      display: block;
+      width: 42%;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--gold);
+      animation: loadingSlide 1.2s ease-in-out infinite;
+    }
+
+    .auth-wrap {
+      width: min(100%, 430px);
+      min-height: 0;
+      margin: 0 auto;
+      display: grid;
+      align-content: center;
+      gap: 12px;
+    }
+
+    .auth-brand {
+      display: grid;
+      justify-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .auth-brand .brand-logo {
+      flex-direction: column;
+    }
+
+    .auth-brand .brand-name {
+      font-size: 24px;
+    }
+
+    .auth-panel-brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      text-align: left;
+    }
+
+    .auth-panel-brand .brand-name {
+      font-size: 25px;
+      line-height: 1;
+    }
+
+    .auth-panel-brand .brand-slogan {
+      font-size: 10px;
+    }
+
+    .panel {
+      background: var(--glass);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(18px);
+    }
+
+    .auth-panel {
+      padding: 18px;
+    }
+
+    .demo-hint {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin: 0 0 12px;
+      padding: 10px;
+      color: var(--navy-2);
+      background: color-mix(in srgb, var(--gold) 16%, var(--surface));
+      border: 1px solid rgba(255, 165, 0, 0.28);
+      border-radius: var(--radius);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .demo-hint strong {
+      display: block;
+      color: var(--ink);
+      margin-bottom: 2px;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 23px;
+      line-height: 1.15;
+      color: var(--ink);
+    }
+
+    .panel-subtitle {
+      margin: 5px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .field {
+      display: grid;
+      gap: 5px;
+    }
+
+    .field label {
+      font-size: 12px;
+      font-weight: 850;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .input,
+    .select,
+    .textarea {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 13px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      outline: none;
+      transition: border 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+    }
+
+    .textarea {
+      min-height: 96px;
+      resize: vertical;
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 4px rgba(255, 165, 0, 0.15);
+    }
+
+    .btn {
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      padding: 10px 16px;
+      border-radius: var(--button-radius);
+      font-weight: 900;
+      color: var(--ink);
+      background: var(--surface-3);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+      user-select: none;
+    }
+
+    .btn:active {
+      transform: scale(0.98);
+    }
+
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .btn-primary {
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+    }
+
+    .btn-navy {
+      color: #ffffff;
+      background: linear-gradient(135deg, #0A2D73, #17459d);
+    }
+
+    [data-theme="dark"] .btn-navy {
+      color: #09111f;
+      background: linear-gradient(135deg, #82a8ff, #d5e2ff);
+    }
+
+    .btn-outline {
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .btn-danger {
+      color: #ffffff;
+      background: var(--danger);
+    }
+
+    .btn-full {
+      width: 100%;
+    }
+
+    .auth-actions {
+      display: grid;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
+    .auth-switch {
+      margin: 12px 0 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .text-link {
+      padding: 0;
+      color: var(--navy);
+      background: transparent;
+      font-weight: 900;
+    }
+
+    .app-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      min-height: var(--header-height);
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--gold) 7%, transparent), transparent 32%),
+        color-mix(in srgb, var(--surface) 90%, transparent);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+
+    .header-left {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .header-title {
+      min-width: 0;
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .eyebrow {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .title-text {
+      margin: 0;
+      font-size: 20px;
+      line-height: 1.1;
+      font-weight: 950;
+      color: var(--ink);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .icon-btn {
+      width: 42px;
+      height: 42px;
+      display: inline-grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: var(--button-radius);
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: 0 8px 20px rgba(10, 45, 115, 0.08);
+      transition: transform 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .icon-btn svg {
+      width: 20px;
+      height: 20px;
+      stroke: currentColor;
+      stroke-width: 2.35;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .icon-btn:active {
+      transform: scale(0.96);
+    }
+
+    .menu-btn {
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      border-color: rgba(255, 165, 0, 0.48);
+    }
+
+    .header-menu {
+      position: absolute;
+      top: calc(100% + 8px);
+      right: 16px;
+      width: min(280px, calc(100vw - 32px));
+      display: none;
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: color-mix(in srgb, var(--surface) 96%, transparent);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(20px);
+    }
+
+    .header-menu.show {
+      display: grid;
+      animation: fadeUp 0.18s ease both;
+    }
+
+    @media (max-width: 480px) {
+      .app-header {
+        min-height: 66px;
+        gap: 6px;
+        padding: 9px 10px;
+      }
+
+      .header-left {
+        gap: 8px;
+      }
+
+      .brand-mark.header-logo {
+        width: 62px;
+        height: 34px;
+        padding: 3px;
+      }
+
+      .header-title .eyebrow {
+        display: none;
+      }
+
+      .title-text {
+        max-width: none;
+        font-size: 15px;
+        line-height: 1.05;
+        white-space: normal;
+        overflow: visible;
+        text-overflow: clip;
+        overflow-wrap: anywhere;
+      }
+
+      .header-actions {
+        gap: 4px;
+      }
+
+      .icon-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .header-menu {
+        right: 10px;
+        width: min(270px, calc(100vw - 20px));
+      }
+
+      .main {
+        padding: 12px 10px 18px;
+      }
+
+      .hero-card {
+        gap: 11px;
+        padding: 15px 14px;
+      }
+
+      .hero-card h2 {
+        max-width: 300px;
+        font-size: 27px;
+        line-height: 1.04;
+      }
+
+      .hero-card p {
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .welcome-row {
+        gap: 7px;
+      }
+
+      .welcome-pill {
+        min-height: 28px;
+        padding: 5px 8px;
+        font-size: 10px;
+      }
+
+      .search-box input {
+        font-size: 13px;
+      }
+
+      .suggestion-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding-bottom: 2px;
+        scrollbar-width: none;
+      }
+
+      .suggestion-row::-webkit-scrollbar {
+        display: none;
+      }
+
+      .suggestion-chip {
+        flex: 0 0 auto;
+        min-height: 30px;
+        padding: 6px 9px;
+        font-size: 10px;
+      }
+    }
+
+    .menu-item {
+      min-height: 46px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      color: var(--ink);
+      background: transparent;
+      font-weight: 900;
+      text-align: left;
+    }
+
+    .menu-item:hover {
+      background: var(--surface-2);
+    }
+
+    .menu-item svg {
+      width: 19px;
+      height: 19px;
+      flex: 0 0 auto;
+      stroke: var(--navy-2);
+      stroke-width: 2.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .main {
+      width: min(100%, 1080px);
+      margin: 0 auto;
+      padding: 18px 16px 22px;
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      color: #ffffff;
+      background:
+        linear-gradient(135deg, rgba(10, 45, 115, 0.98), rgba(17, 70, 159, 0.94)),
+        linear-gradient(45deg, transparent, rgba(255, 165, 0, 0.26));
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: -36px;
+      top: -52px;
+      width: 144px;
+      height: 144px;
+      border: 16px solid rgba(255, 165, 0, 0.22);
+      border-radius: 50%;
+    }
+
+    .hero-card h2 {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      max-width: 640px;
+      font-size: clamp(28px, 9vw, 48px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .hero-card p {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      max-width: 620px;
+      color: rgba(255, 255, 255, 0.82);
+    }
+
+    .welcome-row {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 2px;
+    }
+
+    .welcome-pill {
+      display: inline-flex;
+      align-items: center;
+      min-height: 32px;
+      padding: 6px 11px;
+      border-radius: var(--button-radius);
+      color: #071f52;
+      background: rgba(255, 255, 255, 0.92);
+      font-size: 12px;
+      font-weight: 950;
+    }
+
+    .hero-stats {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .hero-stat {
+      min-height: 72px;
+      display: grid;
+      align-content: center;
+      gap: 2px;
+      padding: 11px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(16px);
+    }
+
+    .hero-stat strong {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .hero-stat span {
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .search-box {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 58px;
+      padding: 8px 9px 8px 18px;
+      background: rgba(255, 255, 255, 0.94);
+      border: 1px solid rgba(255, 255, 255, 0.68);
+      border-radius: 20px;
+      box-shadow: 0 14px 32px rgba(7, 31, 82, 0.16);
+      backdrop-filter: blur(18px);
+    }
+
+    .search-box .search-icon {
+      width: 20px;
+      height: 20px;
+      flex: 0 0 auto;
+      color: #0A2D73;
+      stroke: currentColor;
+      stroke-width: 2.4;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .search-box input {
+      width: 100%;
+      min-width: 0;
+      border: 0;
+      outline: 0;
+      color: #12213f;
+      background: transparent;
+      font-size: 15px;
+      font-weight: 650;
+    }
+
+    .search-box .btn {
+      min-height: 42px;
+      padding: 10px 18px;
+      box-shadow: none;
+      flex: 0 0 auto;
+    }
+
+    .suggestion-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .suggestion-chip {
+      min-height: 34px;
+      padding: 7px 11px;
+      border: 1px solid color-mix(in srgb, var(--gold) 42%, transparent);
+      border-radius: var(--button-radius);
+      color: #071f52;
+      background: rgba(255, 255, 255, 0.86);
+      font-size: 12px;
+      font-weight: 900;
+      box-shadow: 0 8px 18px rgba(7, 31, 82, 0.1);
+    }
+
+    .toolbar .suggestion-row {
+      margin-top: -2px;
+    }
+
+    .toolbar .suggestion-chip {
+      background: var(--surface);
+      border-color: var(--line);
+      color: var(--ink);
+      box-shadow: none;
+    }
+
+    @media (max-width: 430px) {
+      .search-box {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 8px;
+        min-height: 50px;
+        padding: 6px 7px 6px 12px;
+        border-radius: 16px;
+      }
+
+      .search-box .btn {
+        grid-column: auto;
+        width: auto;
+        min-height: 38px;
+        padding: 8px 13px;
+        font-size: 12px;
+      }
+    }
+
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .quick-card {
+      aspect-ratio: 1 / 1;
+      display: grid;
+      align-content: space-between;
+      justify-items: center;
+      gap: 10px;
+      padding: 13px 8px 12px;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+      text-align: center;
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .quick-card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(255, 165, 0, 0.7);
+      box-shadow: var(--shadow);
+    }
+
+    .quick-icon {
+      width: 48px;
+      height: 48px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      font-size: 23px;
+      font-weight: 950;
+    }
+
+    .quick-card h3 {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.18;
+    }
+
+    .quick-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.25;
+      max-width: 98px;
+    }
+
+    .guide-strip {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .guide-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      border-radius: var(--radius);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .guide-number {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: var(--button-radius);
+      color: #071f52;
+      background: var(--gold);
+      font-weight: 950;
+    }
+
+    .guide-card strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .guide-card span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .organized-stack {
+      display: grid;
+      gap: 16px;
+      margin-top: 16px;
+      min-width: 0;
+    }
+
+    .content-block {
+      padding: 15px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .content-block.plain {
+      padding: 0;
+      border: 0;
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .block-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .block-head h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .block-head p {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .primary-actions {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .action-row {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 76px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 13px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      text-align: left;
+      box-shadow: var(--shadow-soft);
+      overflow: hidden;
+    }
+
+    .action-row > span,
+    .service-row > span {
+      min-width: 0;
+    }
+
+    .action-icon {
+      width: 44px;
+      height: 44px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      box-shadow: 0 10px 18px rgba(255, 165, 0, 0.22);
+    }
+
+    .action-icon svg {
+      width: 24px;
+      height: 24px;
+      stroke: currentColor;
+      stroke-width: 2.3;
+      fill: none;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .action-title {
+      display: block;
+      font-size: 15px;
+      font-weight: 950;
+      line-height: 1.18;
+      overflow-wrap: anywhere;
+    }
+
+    .action-caption {
+      display: block;
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .action-arrow {
+      color: var(--muted);
+      font-size: 22px;
+      font-weight: 950;
+    }
+
+    .service-list {
+      display: grid;
+      gap: 9px;
+      min-width: 0;
+    }
+
+    .service-row {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      min-height: 64px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 11px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      text-align: left;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+      overflow: hidden;
+    }
+
+    .service-row:hover {
+      transform: translateY(-1px);
+      border-color: rgba(255, 165, 0, 0.64);
+    }
+
+    .service-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: var(--navy-2);
+      background: linear-gradient(135deg, rgba(255, 165, 0, 0.28), rgba(10, 45, 115, 0.08));
+      border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
+    }
+
+    .service-icon svg,
+    .category-icon svg {
+      width: 22px;
+      height: 22px;
+      stroke: currentColor;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+    }
+
+    .service-row h3 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .service-row p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .mini-status-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .mini-status {
+      padding: 13px;
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      border: 1px solid var(--line);
+    }
+
+    .mini-status strong {
+      display: block;
+      color: var(--navy-2);
+      font-size: 21px;
+      line-height: 1;
+    }
+
+    .mini-status span {
+      display: block;
+      margin-top: 5px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .trust-grid,
+    .impact-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .trust-card,
+    .impact-card {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+    }
+
+    .trust-card h3,
+    .impact-card h3 {
+      margin: 0;
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .trust-card p,
+    .impact-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .trust-icon,
+    .impact-icon {
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      font-weight: 950;
+    }
+
+    .sdg-hero {
+      display: grid;
+      gap: 14px;
+      padding: 22px;
+      border-radius: var(--radius);
+      color: #ffffff;
+      background:
+        linear-gradient(135deg, rgba(162, 25, 66, 0.96), rgba(10, 45, 115, 0.92)),
+        var(--navy);
+      box-shadow: var(--shadow);
+    }
+
+    .sdg-hero h2 {
+      margin: 0;
+      font-size: clamp(28px, 7vw, 46px);
+      line-height: 1.04;
+    }
+
+    .sdg-hero p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.82);
+      max-width: 720px;
+    }
+
+    .sdg-badge {
+      width: max-content;
+      display: inline-flex;
+      align-items: center;
+      min-height: 34px;
+      padding: 6px 12px;
+      border-radius: var(--button-radius);
+      color: #ffffff;
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      font-weight: 950;
+    }
+
+    .expert-group {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .expert-group:first-child {
+      margin-top: 0;
+    }
+
+    .group-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 0 2px;
+    }
+
+    .group-label h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .section {
+      margin-top: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      margin: 0;
+      font-size: 19px;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+
+    .section-note {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .carousel {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 78%;
+      gap: 12px;
+      overflow-x: auto;
+      padding: 2px 2px 12px;
+      scroll-snap-type: x mandatory;
+      scrollbar-width: none;
+    }
+
+    .carousel::-webkit-scrollbar {
+      display: none;
+    }
+
+    .expert-mini,
+    .expert-card,
+    .category-card,
+    .booking-card,
+    .notification-card,
+    .profile-stat,
+    .message-row,
+    .score-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .expert-mini {
+      scroll-snap-align: start;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .expert-mini::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 4px;
+      background: linear-gradient(90deg, var(--navy), var(--gold));
+    }
+
+    .expert-top {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .avatar {
+      width: 56px;
+      height: 56px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      color: #ffffff;
+      background: linear-gradient(135deg, #0A2D73, #2672d9);
+      font-weight: 950;
+      box-shadow: 0 12px 24px rgba(10, 45, 115, 0.22);
+      overflow: hidden;
+    }
+
+    .avatar.gold {
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+    }
+
+    .avatar.large {
+      width: 116px;
+      height: 116px;
+      font-size: 38px;
+      border: 5px solid var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .expert-meta {
+      min-width: 0;
+    }
+
+    .expert-meta h3,
+    .expert-card h3 {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .expert-meta p,
+    .expert-card p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .badge-line {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      min-height: 26px;
+      padding: 4px 9px;
+      border-radius: var(--button-radius);
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--navy-2);
+      background: var(--navy-soft);
+      border: 1px solid color-mix(in srgb, var(--navy) 18%, transparent);
+    }
+
+    .badge.gold {
+      color: #6f4300;
+      background: rgba(255, 165, 0, 0.18);
+      border-color: rgba(255, 165, 0, 0.36);
+    }
+
+    .badge.success {
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 12%, transparent);
+      border-color: color-mix(in srgb, var(--success) 26%, transparent);
+    }
+
+    .badge.soft {
+      color: var(--muted);
+      background: var(--surface-2);
+      border-color: var(--line);
+    }
+
+    .category-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .category-card {
+      min-height: 100px;
+      display: grid;
+      align-content: space-between;
+      gap: 10px;
+      padding: 14px;
+      transition: transform 0.18s ease, border-color 0.18s ease;
+    }
+
+    .category-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255, 165, 0, 0.65);
+    }
+
+    .category-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: var(--radius);
+      color: var(--navy-2);
+      background: linear-gradient(135deg, rgba(255, 165, 0, 0.3), rgba(255, 255, 255, 0.4));
+      font-weight: 950;
+    }
+
+    .expert-facts {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .expert-fact {
+      padding: 9px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface-2);
+      min-width: 0;
+    }
+
+    .expert-fact strong {
+      display: block;
+      color: var(--navy-2);
+      font-size: 14px;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .expert-fact span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      text-transform: uppercase;
+    }
+
+    .category-card h3 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .category-card p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .score-card {
+      position: relative;
+      overflow: hidden;
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+      background:
+        linear-gradient(135deg, color-mix(in srgb, var(--surface) 94%, var(--gold)), var(--surface)),
+        var(--surface);
+    }
+
+    .score-meter {
+      height: 12px;
+      overflow: hidden;
+      border-radius: var(--button-radius);
+      background: var(--surface-3);
+    }
+
+    .score-meter span {
+      display: block;
+      height: 100%;
+      width: var(--score-width, 84%);
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--gold), var(--success));
+    }
+
+    .score-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .score-big {
+      font-size: 38px;
+      line-height: 1;
+      font-weight: 950;
+      color: var(--navy-2);
+    }
+
+    .toolbar {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .results-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .results-summary strong {
+      display: block;
+      font-size: 15px;
+    }
+
+    .filter-row {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 6px;
+      scrollbar-width: none;
+    }
+
+    .filter-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .chip {
+      min-height: 38px;
+      flex: 0 0 auto;
+      padding: 8px 13px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--button-radius);
+      font-size: 13px;
+      font-weight: 850;
+      transition: background 0.18s ease, color 0.18s ease, transform 0.18s ease;
+    }
+
+    .chip.active {
+      color: #071f52;
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .expert-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .expert-card {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .expert-card.recommended {
+      border-color: rgba(255, 165, 0, 0.52);
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--gold) 9%, transparent), transparent 34%),
+        var(--surface);
+    }
+
+    .expert-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .expert-card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+    }
+
+    .expert-price-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding-top: 2px;
+    }
+
+    .expert-price-row strong {
+      font-size: 19px;
+      color: var(--navy-2);
+    }
+
+    .booking-helper {
+      display: grid;
+      gap: 8px;
+      padding: 13px;
+      border-radius: var(--radius);
+      color: var(--navy-2);
+      background: color-mix(in srgb, var(--navy) 8%, var(--surface));
+      border: 1px solid color-mix(in srgb, var(--navy) 18%, transparent);
+    }
+
+    .booking-helper strong {
+      color: var(--ink);
+    }
+
+    .booking-summary {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: var(--radius);
+      color: #ffffff;
+      background:
+        linear-gradient(135deg, rgba(10, 45, 115, 0.98), rgba(31, 99, 196, 0.92)),
+        var(--navy);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .booking-summary h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .booking-summary p {
+      margin: 0;
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 13px;
+    }
+
+    .booking-summary-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .booking-summary-item {
+      padding: 9px;
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.11);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .booking-summary-item span {
+      display: block;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .booking-summary-item strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 13px;
+    }
+
+    .profile-hero {
+      overflow: hidden;
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+
+    .profile-cover {
+      min-height: 122px;
+      background:
+        linear-gradient(135deg, rgba(10, 45, 115, 0.96), rgba(38, 114, 217, 0.76)),
+        linear-gradient(45deg, rgba(255, 165, 0, 0.36), transparent);
+    }
+
+    .profile-body {
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+      padding: 0 18px 22px;
+      text-align: center;
+      margin-top: -48px;
+    }
+
+    .profile-avatar {
+      width: 96px;
+      height: 96px;
+      display: grid;
+      place-items: center;
+      border: 5px solid var(--surface);
+      border-radius: 50%;
+      color: #ffffff;
+      background:
+        radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.32), transparent 28%),
+        linear-gradient(135deg, var(--navy), #1f63c4);
+      box-shadow: 0 18px 38px rgba(10, 45, 115, 0.22);
+      font-size: 32px;
+      font-weight: 950;
+      letter-spacing: 0;
+    }
+
+    .profile-brand-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 34px;
+      padding: 6px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--button-radius);
+      color: var(--muted);
+      background: color-mix(in srgb, var(--surface) 88%, transparent);
+      font-size: 12px;
+      font-weight: 850;
+    }
+
+    .profile-brand-chip img {
+      width: 58px;
+      height: 22px;
+      object-fit: contain;
+      border-radius: 5px;
+      background: #ffffff;
+    }
+
+    .profile-body h2 {
+      margin: 3px 0 0;
+      font-size: 26px;
+      line-height: 1.12;
+    }
+
+    .profile-body p {
+      margin: 0;
+      color: var(--muted);
+    }
+
+    .profile-actions {
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .details-grid {
+      display: grid;
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .detail-card {
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .detail-card h3 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+
+    .detail-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .review {
+      display: grid;
+      gap: 4px;
+      padding: 12px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .review:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .booking-layout {
+      display: grid;
+      gap: 14px;
+    }
+
+    .slot-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .slot {
+      min-height: 45px;
+      padding: 10px;
+      color: var(--ink);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      font-weight: 900;
+      transition: border 0.18s ease, background 0.18s ease, transform 0.18s ease;
+    }
+
+    .slot small {
+      color: inherit;
+      font-size: 10px;
+      font-weight: 800;
+    }
+
+    .slot.available:hover {
+      border-color: var(--gold);
+      transform: translateY(-1px);
+    }
+
+    .slot.selected {
+      color: #071f52;
+      background: var(--gold);
+      border-color: var(--gold);
+    }
+
+    .slot.unavailable {
+      cursor: not-allowed;
+      color: var(--muted);
+      opacity: 0.62;
+      background: repeating-linear-gradient(135deg, var(--surface-2), var(--surface-2) 8px, var(--surface-3) 8px, var(--surface-3) 16px);
+    }
+
+    .segmented {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 5px;
+      border: 1px solid var(--line);
+      border-radius: var(--button-radius);
+      background: var(--surface-2);
+    }
+
+    .segment {
+      min-height: 40px;
+      border-radius: var(--button-radius);
+      color: var(--muted);
+      background: transparent;
+      font-weight: 900;
+    }
+
+    .segment.active {
+      color: #071f52;
+      background: var(--gold);
+      box-shadow: 0 8px 18px rgba(255, 165, 0, 0.24);
+    }
+
+    .booking-card {
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .booking-card-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .empty-state {
+      min-height: 360px;
+      display: grid;
+      justify-items: center;
+      align-content: center;
+      gap: 18px;
+      padding: 30px 18px;
+      text-align: center;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .empty-illustration {
+      position: relative;
+      width: 164px;
+      height: 126px;
+    }
+
+    .empty-illustration .calendar {
+      position: absolute;
+      inset: 18px 18px 0;
+      border-radius: var(--radius);
+      background: var(--surface-3);
+      border: 2px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .empty-illustration .calendar::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto;
+      height: 30px;
+      border-radius: 6px 6px 0 0;
+      background: var(--gold);
+    }
+
+    .empty-illustration .dot {
+      position: absolute;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: var(--navy);
+    }
+
+    .empty-illustration .dot.one {
+      left: 54px;
+      top: 65px;
+    }
+
+    .empty-illustration .dot.two {
+      right: 54px;
+      top: 65px;
+    }
+
+    .empty-illustration .line {
+      position: absolute;
+      left: 58px;
+      right: 58px;
+      bottom: 24px;
+      height: 8px;
+      border-radius: var(--button-radius);
+      background: var(--line);
+    }
+
+    .application-success {
+      display: none;
+      padding: 16px;
+      color: var(--success);
+      background: color-mix(in srgb, var(--success) 12%, transparent);
+      border: 1px solid color-mix(in srgb, var(--success) 28%, transparent);
+      border-radius: var(--radius);
+      font-weight: 900;
+      text-align: center;
+    }
+
+    .application-success.show {
+      display: block;
+      animation: popIn 0.3s ease both;
+    }
+
+    .chat-layout {
+      display: grid;
+      gap: 14px;
+      align-items: start;
+    }
+
+    .conversation-list {
+      display: grid;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .conversation-panel {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .conversation-heading {
+      padding: 12px 2px 4px;
+    }
+
+    .conversation-heading h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .conversation-heading p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .message-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: start;
+      gap: 12px;
+      min-height: 86px;
+      padding: 12px;
+      cursor: pointer;
+      text-align: left;
+      overflow: hidden;
+      transition: transform 0.18s ease, border-color 0.18s ease, background 0.18s ease;
+    }
+
+    .message-row.active {
+      border-color: var(--gold);
+      background:
+        linear-gradient(90deg, color-mix(in srgb, var(--gold) 18%, transparent), transparent 70%),
+        var(--surface);
+    }
+
+    .message-row:hover {
+      transform: translateY(-1px);
+    }
+
+    .message-info {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .message-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      min-width: 0;
+    }
+
+    .message-info h3 {
+      margin: 0;
+      font-size: 14px;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .message-info p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      overflow: hidden;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+    }
+
+    .message-time {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .chat-panel {
+      min-height: 600px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+      box-shadow: var(--shadow-soft);
+    }
+
+    .chat-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .chat-messages {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 20px;
+      overflow-y: auto;
+      background:
+        linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 85%, transparent), var(--surface));
+    }
+
+    .bubble {
+      max-width: min(76%, 620px);
+      padding: 12px 14px;
+      border-radius: 16px 16px 16px 6px;
+      color: var(--ink);
+      background: var(--surface-3);
+      animation: fadeUp 0.25s ease both;
+      box-shadow: 0 8px 18px rgba(10, 45, 115, 0.06);
+    }
+
+    .bubble.me {
+      align-self: flex-end;
+      color: #071f52;
+      background: var(--gold);
+      border-radius: 16px 16px 6px 16px;
+    }
+
+    .chat-input {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      padding: 14px;
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .chat-input .input {
+      border-radius: 16px;
+      min-height: 54px;
+    }
+
+    .chat-input .btn {
+      min-width: 96px;
+      min-height: 54px;
+    }
+
+    .notification-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .notification-card {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .notification-dot {
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      border-radius: var(--radius);
+      color: #071f52;
+      background: var(--gold);
+      font-weight: 950;
+    }
+
+    .notification-card h3 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .notification-card p {
+      margin: 3px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .profile-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .profile-stat {
+      padding: 14px;
+    }
+
+    .profile-stat strong {
+      display: block;
+      font-size: 22px;
+      color: var(--navy-2);
+    }
+
+    .profile-stat span {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0;
+    }
+
+    .settings-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .setting-row {
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--surface);
+    }
+
+    .toggle {
+      position: relative;
+      width: 54px;
+      height: 30px;
+      flex: 0 0 auto;
+      border-radius: var(--button-radius);
+      background: var(--surface-3);
+      border: 1px solid var(--line);
+      transition: background 0.18s ease;
+    }
+
+    .toggle::after {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--surface);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.18);
+      transition: transform 0.18s ease;
+    }
+
+    .toggle.active {
+      background: var(--gold);
+    }
+
+    .toggle.active::after {
+      transform: translateX(24px);
+    }
+
+    .bottom-nav {
+      position: fixed;
+      z-index: 30;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: none;
+      justify-content: center;
+      padding: 10px 12px calc(10px + var(--safe-bottom));
+      background: color-mix(in srgb, var(--surface) 90%, transparent);
+      border-top: 1px solid var(--line);
+      backdrop-filter: blur(18px);
+    }
+
+    .bottom-nav.show {
+      display: flex;
+    }
+
+    .nav-inner {
+      width: min(calc(100% - 18px), 560px);
+      height: 68px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 5px;
+      padding: 7px 8px;
+      border-radius: 24px;
+      background: color-mix(in srgb, var(--surface) 94%, transparent);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 42px rgba(10, 45, 115, 0.13);
+      backdrop-filter: blur(20px);
+    }
+
+    .nav-item {
+      position: relative;
+      min-width: 0;
+      display: grid;
+      place-items: center;
+      align-content: center;
+      gap: 5px;
+      color: var(--muted);
+      background: transparent;
+      border-radius: 18px;
+      font-size: 10.5px;
+      font-weight: 900;
+      line-height: 1;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .nav-item .nav-icon {
+      width: 22px;
+      height: 22px;
+      display: block;
+      color: currentColor;
+      stroke: currentColor;
+      stroke-width: 2.25;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      transition: transform 0.2s ease, stroke-width 0.2s ease;
+    }
+
+    .nav-item.active {
+      color: #071f52;
+      background: linear-gradient(135deg, var(--gold), var(--gold-2));
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px rgba(255, 165, 0, 0.24);
+    }
+
+    .nav-item.active .nav-icon {
+      transform: translateY(-1px);
+      stroke-width: 2.6;
+    }
+
+    .nav-item.active::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: 5px;
+      width: 18px;
+      height: 2px;
+      transform: translateX(-50%);
+      border-radius: var(--button-radius);
+      background: rgba(7, 31, 82, 0.35);
+    }
+
+    @media (max-width: 480px) {
+      .bottom-nav {
+        padding: 7px 5px calc(7px + var(--safe-bottom));
+      }
+
+      .nav-inner {
+        width: calc(100% - 4px);
+        height: 62px;
+        gap: 2px;
+        padding: 5px;
+        border-radius: 20px;
+      }
+
+      .nav-item {
+        gap: 3px;
+        border-radius: 15px;
+        font-size: 9px;
+      }
+
+      .nav-item .nav-icon {
+        width: 20px;
+        height: 20px;
+      }
+
+      .nav-item.active::after {
+        bottom: 3px;
+        width: 14px;
+      }
+
+      .action-row {
+        min-height: 82px;
+        grid-template-columns: 46px minmax(0, 1fr) 14px;
+        gap: 10px;
+        padding: 12px;
+      }
+
+      .action-icon {
+        width: 46px;
+        height: 46px;
+      }
+
+      .action-icon svg {
+        width: 22px;
+        height: 22px;
+      }
+
+      .action-title {
+        font-size: 14px;
+        line-height: 1.18;
+      }
+
+      .action-caption {
+        font-size: 11px;
+        line-height: 1.28;
+      }
+
+      .action-arrow {
+        font-size: 18px;
+      }
+    }
+
+    .toast {
+      position: fixed;
+      z-index: 80;
+      left: 50%;
+      bottom: calc(var(--nav-height) + 22px + var(--safe-bottom));
+      width: min(calc(100vw - 32px), 430px);
+      display: none;
+      transform: translateX(-50%);
+      padding: 12px 14px;
+      color: #ffffff;
+      background: #12213f;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      font-weight: 850;
+    }
+
+    .toast.show {
+      display: block;
+      animation: toastIn 0.28s ease both;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .fade-in {
+      animation: fadeUp 0.36s ease both;
+    }
+
+    @keyframes pageIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes logoReveal {
+      0% {
+        opacity: 0;
+        transform: scale(0.88) translateY(12px);
+      }
+      70% {
+        opacity: 1;
+        transform: scale(1.04) translateY(0);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes loadingSlide {
+      0% {
+        transform: translateX(-110%);
+      }
+      50% {
+        transform: translateX(90%);
+      }
+      100% {
+        transform: translateX(250%);
+      }
+    }
+
+    @keyframes splashOut {
+      to {
+        opacity: 0;
+        transform: scale(1.02);
+      }
+    }
+
+    @keyframes toastIn {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 12px);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
+    @keyframes popIn {
+      from {
+        opacity: 0;
+        transform: scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @media (min-width: 680px) {
+      .main {
+        padding: 24px;
+      }
+
+      .quick-grid {
+        gap: 14px;
+      }
+
+      .quick-card h3 {
+        font-size: 16px;
+      }
+
+      .carousel {
+        grid-auto-columns: 320px;
+      }
+
+      .category-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .service-list {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .trust-grid,
+      .impact-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .expert-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .details-grid,
+      .booking-layout {
+        grid-template-columns: 340px minmax(0, 1fr);
+        align-items: start;
+      }
+
+      .chat-layout {
+        grid-template-columns: minmax(280px, 320px) minmax(0, 1fr);
+        align-items: stretch;
+      }
+
+      .auth-panel {
+        padding: 28px;
+      }
+    }
+
+    @media (min-width: 980px) {
+      .app-header {
+        padding-left: max(24px, calc((100vw - 1080px) / 2 + 24px));
+        padding-right: max(24px, calc((100vw - 1080px) / 2 + 24px));
+      }
+
+      .expert-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .hero-card {
+        padding: 30px;
+      }
+
+      .primary-actions {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .action-row {
+        min-height: 154px;
+        grid-template-columns: 1fr;
+        align-content: space-between;
+        justify-items: start;
+        gap: 14px;
+        padding: 18px;
+      }
+
+      .action-icon {
+        width: 50px;
+        height: 50px;
+      }
+
+      .action-arrow {
+        display: none;
+      }
+
+      .action-title {
+        font-size: 17px;
+      }
+
+      .action-caption {
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      .service-list {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .trust-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+
+      .impact-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .service-row {
+        min-height: 118px;
+        grid-template-columns: 1fr;
+        align-content: start;
+        gap: 10px;
+        padding: 15px;
+      }
+
+      .service-row .action-arrow {
+        display: none;
+      }
+
+      .service-icon {
+        width: 44px;
+        height: 44px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="splashScreen" class="splash-screen">
+    <div class="splash-card">
+      <div class="splash-logo-wrap">
+        <img class="brand-mark large" src="logoTB.png" alt="TalentBridge - Learn, Hire, Earn, and Connect">
+      </div>
+      <div class="loader-line" aria-hidden="true"><span></span></div>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <section id="loginScreen" class="screen auth-screen">
+      <div class="auth-wrap">
+        <div class="panel auth-panel">
+          <div class="auth-panel-brand">
+            <div class="brand-logo">
+              <img class="brand-mark auth-logo" src="logoTB.png" alt="TalentBridge logo">
+              <div class="brand-copy">
+                <div class="brand-name">TalentBridge</div>
+                <div class="brand-slogan">Learn, Hire, Earn, and Connect</div>
+              </div>
+            </div>
+          </div>
+          <h1 class="panel-title">Welcome back</h1>
+          <p class="panel-subtitle">Log in to learn, hire, earn, and connect with trusted experts.</p>
+          <div class="demo-hint">
+            <span class="guide-number">i</span>
+            <div>
+              <strong>Demo ready</strong>
+              Use <b>demo@talentbridge.app</b> with password <b>demo123</b>, or tap Google/Phone to enter instantly.
+            </div>
+          </div>
+          <form id="loginForm" class="form-grid">
+            <div class="field">
+              <label for="loginEmail">Email</label>
+              <input id="loginEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+              <label for="loginPassword">Password</label>
+              <input id="loginPassword" class="input" type="password" autocomplete="current-password" placeholder="Enter password" required>
+            </div>
+            <div class="auth-actions">
+              <button class="btn btn-primary btn-full" type="submit">Login</button>
+              <button class="btn btn-outline btn-full" type="button" data-demo-login="google">Continue with Google</button>
+              <button class="btn btn-outline btn-full" type="button" data-demo-login="phone">Continue with Phone</button>
+            </div>
+          </form>
+          <p class="auth-switch">New to TalentBridge? <button class="text-link" type="button" data-route="signup">Sign Up</button></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="signupScreen" class="screen auth-screen">
+      <div class="auth-wrap">
+        <div class="auth-brand">
+          <div class="brand-logo">
+            <img class="brand-mark auth-logo" src="logoTB.png" alt="TalentBridge logo">
+            <div class="brand-copy">
+              <div class="brand-name">TalentBridge</div>
+              <div class="brand-slogan">Learn, Hire, Earn, and Connect</div>
+            </div>
+          </div>
+        </div>
+        <div class="panel auth-panel">
+          <h1 class="panel-title">Create your account</h1>
+          <p class="panel-subtitle">Start booking experts or become one in minutes.</p>
+          <form id="signupForm" class="form-grid">
+            <div class="field">
+              <label for="signupName">Full Name</label>
+              <input id="signupName" class="input" type="text" autocomplete="name" placeholder="Full name" required>
+            </div>
+            <div class="field">
+              <label for="signupEmail">Email</label>
+              <input id="signupEmail" class="input" type="email" autocomplete="email" placeholder="you@example.com" required>
+            </div>
+            <div class="field">
+              <label for="signupPhone">Phone</label>
+              <input id="signupPhone" class="input" type="tel" autocomplete="tel" placeholder="+60 12 345 6789" required>
+            </div>
+            <div class="field">
+              <label for="signupPassword">Password</label>
+              <input id="signupPassword" class="input" type="password" autocomplete="new-password" placeholder="Create password" required>
+            </div>
+            <button class="btn btn-primary btn-full" type="submit">Create Account</button>
+          </form>
+          <p class="auth-switch">Already have an account? <button class="text-link" type="button" data-route="login">Login</button></p>
+        </div>
+      </div>
+    </section>
+
+    <section id="appScreen" class="screen">
+      <header class="app-header">
+        <div class="header-left">
+          <img class="brand-mark header-logo" src="logoTB.png" alt="TalentBridge logo">
+          <div class="header-title">
+            <div id="headerEyebrow" class="eyebrow">TalentBridge</div>
+            <h1 id="headerTitle" class="title-text">Home</h1>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="icon-btn" type="button" title="Notifications" data-route="notifications" aria-label="Notifications">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"></path><path d="M10 21h4"></path></svg>
+          </button>
+          <button class="icon-btn" type="button" title="Dark mode" id="headerThemeToggle" aria-label="Toggle dark mode">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.6A8.5 8.5 0 1 1 11.4 3 6.5 6.5 0 0 0 21 12.6Z"></path></svg>
+          </button>
+          <button class="icon-btn menu-btn" type="button" title="Menu" id="headerMenuToggle" aria-label="Open menu" aria-expanded="false">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"></path><path d="M4 12h16"></path><path d="M4 17h16"></path></svg>
+          </button>
+          <div id="headerMenu" class="header-menu">
+            <button class="menu-item" type="button" data-route="home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8"></path><path d="M5 10v10h14V10"></path></svg>Home</button>
+            <button class="menu-item" type="button" data-route="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>Find Experts</button>
+            <button class="menu-item" type="button" data-route="bookings"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 10h16"></path></svg>My Bookings</button>
+            <button class="menu-item" type="button" data-route="join"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"></path><path d="M5 12h14"></path></svg>Join as Expert</button>
+            <button class="menu-item" type="button" data-route="business"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"></path><rect x="3" y="6" width="18" height="14" rx="3"></rect><path d="M3 12h18"></path><path d="M10 12v2h4v-2"></path></svg>Business Info</button>
+            <button class="menu-item" type="button" data-route="sdg"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 16v-5"></path><path d="M12 16V8"></path><path d="M16 16v-3"></path><path d="M7 8h10"></path></svg>SDG 8 Impact</button>
+            <button class="menu-item" type="button" data-route="profile"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg>Profile</button>
+          </div>
+        </div>
+      </header>
+
+      <main id="mainContent" class="main"></main>
+    </section>
+  </div>
+
+  <nav id="bottomNav" class="bottom-nav" aria-label="Main navigation">
+    <div class="nav-inner">
+      <button class="nav-item active" type="button" data-route="home">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.8 12 3l9 7.8"></path><path d="M5 10v10h14V10"></path><path d="M9.5 20v-6h5v6"></path></svg>
+        <span>Home</span>
+      </button>
+      <button class="nav-item" type="button" data-route="search">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+        <span>Search</span>
+      </button>
+      <button class="nav-item" type="button" data-route="chat">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5h16v11H8l-4 4z"></path><path d="M8 10h8"></path><path d="M8 13.5h5"></path></svg>
+        <span>Chat</span>
+      </button>
+      <button class="nav-item" type="button" data-route="bookings">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"></rect><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 10h16"></path><path d="m8.5 15 2 2 4.5-4.5"></path></svg>
+        <span>Bookings</span>
+      </button>
+      <button class="nav-item" type="button" data-route="profile">
+        <svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"></circle><path d="M4.5 21a7.5 7.5 0 0 1 15 0"></path></svg>
+        <span>Profile</span>
+      </button>
+    </div>
+  </nav>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    /*
+      TalentBridge data layer.
+      Arrays seed the demo; localStorage persists users, sessions,
+      bookings, messages, notifications, expert applications, and theme.
+    */
+
+    const STORAGE_KEYS = {
+      users: "talentbridge_users",
+      session: "talentbridge_session",
+      bookings: "talentbridge_bookings",
+      messages: "talentbridge_messages",
+      notifications: "talentbridge_notifications",
+      applications: "talentbridge_applications",
+      theme: "talentbridge_theme"
+    };
+
+    const categories = [
+      {
+        group: "Education",
+        icon: "ED",
+        items: ["Math Tutor", "Science Tutor", "English Tutor", "Coding Mentor", "Language Teacher"]
+      },
+      {
+        group: "Freelancers",
+        icon: "FR",
+        items: ["Web Developer", "App Developer", "Graphic Designer", "Video Editor", "Digital Marketer"]
+      },
+      {
+        group: "Home Services",
+        icon: "HS",
+        items: ["Electrician", "Plumber", "Carpenter", "AC Technician"]
+      },
+      {
+        group: "Business",
+        icon: "BU",
+        items: ["Accountant", "Tax Consultant", "Business Mentor"]
+      },
+      {
+        group: "Health & Wellness",
+        icon: "HW",
+        items: ["Fitness Coach", "Nutrition Coach"]
+      }
+    ];
+
+    const popularSearches = ["Math Tutor", "Plumber", "Web Developer", "Fitness Coach"];
+
+    const experts = [
+      {
+        id: "exp-001",
+        name: "Aisha Rahman",
+        initials: "AR",
+        category: "Education",
+        subcategory: "Math Tutor",
+        rating: 4.9,
+        talentScore: 96,
+        experience: 8,
+        rate: 42,
+        availability: "Available today",
+        bio: "Aisha helps secondary and foundation students build confidence in algebra, calculus, and exam strategy through structured, friendly sessions.",
+        reviews: ["Explains complex concepts clearly.", "My daughter improved quickly.", "Very organized and patient."]
+      },
+      {
+        id: "exp-002",
+        name: "Daniel Lim",
+        initials: "DL",
+        category: "Education",
+        subcategory: "Science Tutor",
+        rating: 4.8,
+        talentScore: 88,
+        experience: 6,
+        rate: 38,
+        availability: "Available tomorrow",
+        bio: "Daniel teaches physics and chemistry using real-world examples, experiments, and targeted revision plans.",
+        reviews: ["Great practical examples.", "Helped me prepare for finals.", "Calm and encouraging."]
+      },
+      {
+        id: "exp-003",
+        name: "Mei Wong",
+        initials: "MW",
+        category: "Education",
+        subcategory: "English Tutor",
+        rating: 4.7,
+        talentScore: 82,
+        experience: 5,
+        rate: 35,
+        availability: "Online now",
+        bio: "Mei coaches writing, speaking, grammar, and interview English for school, work, and travel.",
+        reviews: ["My speaking improved a lot.", "Warm teaching style.", "Detailed writing feedback."]
+      },
+      {
+        id: "exp-004",
+        name: "Ravi Kumar",
+        initials: "RK",
+        category: "Education",
+        subcategory: "Coding Mentor",
+        rating: 5.0,
+        talentScore: 94,
+        experience: 9,
+        rate: 58,
+        availability: "Available today",
+        bio: "Ravi mentors new developers in JavaScript, app architecture, portfolio projects, and technical interview prep.",
+        reviews: ["Portfolio became much stronger.", "Sharp explanations.", "Practical and industry focused."]
+      },
+      {
+        id: "exp-005",
+        name: "Sofia Garcia",
+        initials: "SG",
+        category: "Education",
+        subcategory: "Language Teacher",
+        rating: 4.8,
+        talentScore: 86,
+        experience: 7,
+        rate: 40,
+        availability: "Weekends open",
+        bio: "Sofia teaches Spanish and conversational language skills with immersive practice and clear weekly goals.",
+        reviews: ["Fun lessons.", "Great for beginners.", "Excellent pronunciation coaching."]
+      },
+      {
+        id: "exp-006",
+        name: "Noah Tan",
+        initials: "NT",
+        category: "Freelancers",
+        subcategory: "Web Developer",
+        rating: 4.9,
+        talentScore: 91,
+        experience: 7,
+        rate: 75,
+        availability: "Available this week",
+        bio: "Noah builds responsive websites, landing pages, dashboards, and integrations for founders and local businesses.",
+        reviews: ["Fast and polished delivery.", "Clean communication.", "Our booking site looks premium."]
+      },
+      {
+        id: "exp-007",
+        name: "Priya Nair",
+        initials: "PN",
+        category: "Freelancers",
+        subcategory: "App Developer",
+        rating: 4.9,
+        talentScore: 93,
+        experience: 8,
+        rate: 84,
+        availability: "Accepting projects",
+        bio: "Priya designs and develops mobile apps with smooth onboarding, clean UX, and maintainable front-end systems.",
+        reviews: ["Excellent product thinking.", "Reliable milestones.", "Our MVP launched on time."]
+      },
+      {
+        id: "exp-008",
+        name: "Hana Lee",
+        initials: "HL",
+        category: "Freelancers",
+        subcategory: "Graphic Designer",
+        rating: 4.7,
+        talentScore: 80,
+        experience: 5,
+        rate: 48,
+        availability: "Available today",
+        bio: "Hana creates modern brand systems, pitch deck visuals, social campaigns, and polished marketing assets.",
+        reviews: ["Beautiful brand direction.", "Fast revisions.", "Understood the brief."]
+      },
+      {
+        id: "exp-009",
+        name: "Omar Hassan",
+        initials: "OH",
+        category: "Freelancers",
+        subcategory: "Video Editor",
+        rating: 4.6,
+        talentScore: 78,
+        experience: 4,
+        rate: 45,
+        availability: "Evenings open",
+        bio: "Omar edits short-form video, course content, YouTube cuts, reels, subtitles, and branded motion sequences.",
+        reviews: ["Strong pacing.", "Good subtitle work.", "Easy to collaborate with."]
+      },
+      {
+        id: "exp-010",
+        name: "Farah Aziz",
+        initials: "FA",
+        category: "Freelancers",
+        subcategory: "Digital Marketer",
+        rating: 4.8,
+        talentScore: 87,
+        experience: 6,
+        rate: 55,
+        availability: "Available tomorrow",
+        bio: "Farah manages growth campaigns, SEO audits, paid ads, and marketing funnels for service businesses.",
+        reviews: ["Clear campaign reports.", "Improved our leads.", "Strategic and practical."]
+      },
+      {
+        id: "exp-011",
+        name: "Hakim Zain",
+        initials: "HZ",
+        category: "Home Services",
+        subcategory: "Electrician",
+        rating: 4.9,
+        talentScore: 90,
+        experience: 10,
+        rate: 30,
+        availability: "Available today",
+        bio: "Hakim handles wiring, lighting, switches, safety checks, and urgent electrical troubleshooting.",
+        reviews: ["Arrived on time.", "Professional and careful.", "Fixed the issue quickly."]
+      },
+      {
+        id: "exp-012",
+        name: "Chen Wei",
+        initials: "CW",
+        category: "Home Services",
+        subcategory: "Plumber",
+        rating: 4.7,
+        talentScore: 81,
+        experience: 9,
+        rate: 28,
+        availability: "Same-day slots",
+        bio: "Chen repairs leaks, installs fittings, clears blockages, and performs preventive plumbing checks.",
+        reviews: ["Very tidy work.", "Problem solved quickly.", "Fair pricing."]
+      },
+      {
+        id: "exp-013",
+        name: "Kumar Singh",
+        initials: "KS",
+        category: "Home Services",
+        subcategory: "Carpenter",
+        rating: 4.6,
+        talentScore: 76,
+        experience: 12,
+        rate: 34,
+        availability: "Weekends open",
+        bio: "Kumar builds custom shelves, repairs furniture, installs doors, and handles precise woodwork jobs.",
+        reviews: ["Beautiful finish.", "Measured carefully.", "Good suggestions."]
+      },
+      {
+        id: "exp-014",
+        name: "Arif Salleh",
+        initials: "AS",
+        category: "Home Services",
+        subcategory: "AC Technician",
+        rating: 4.8,
+        talentScore: 84,
+        experience: 7,
+        rate: 32,
+        availability: "Available this week",
+        bio: "Arif services air conditioners, diagnoses cooling issues, performs cleaning, and handles installations.",
+        reviews: ["AC feels new.", "Honest advice.", "Efficient service."]
+      },
+      {
+        id: "exp-015",
+        name: "Lina Ibrahim",
+        initials: "LI",
+        category: "Business",
+        subcategory: "Accountant",
+        rating: 4.9,
+        talentScore: 92,
+        experience: 11,
+        rate: 70,
+        availability: "Online now",
+        bio: "Lina supports founders with bookkeeping, monthly reporting, cash flow visibility, and finance process setup.",
+        reviews: ["Made finance simple.", "Very accurate.", "Great for startups."]
+      },
+      {
+        id: "exp-016",
+        name: "Marcus Teo",
+        initials: "MT",
+        category: "Business",
+        subcategory: "Tax Consultant",
+        rating: 4.8,
+        talentScore: 85,
+        experience: 10,
+        rate: 72,
+        availability: "Limited slots",
+        bio: "Marcus advises individuals and small businesses on tax preparation, compliance, and practical deductions.",
+        reviews: ["Saved us time.", "Explained everything clearly.", "Very professional."]
+      },
+      {
+        id: "exp-017",
+        name: "Nadia Osman",
+        initials: "NO",
+        category: "Business",
+        subcategory: "Business Mentor",
+        rating: 5.0,
+        talentScore: 97,
+        experience: 14,
+        rate: 110,
+        availability: "Accepting clients",
+        bio: "Nadia mentors founders on strategy, offers, pricing, operations, hiring, and confident decision-making.",
+        reviews: ["Transformed our strategy.", "Powerful questions.", "Worth every session."]
+      },
+      {
+        id: "exp-018",
+        name: "Jayden Brooks",
+        initials: "JB",
+        category: "Health & Wellness",
+        subcategory: "Fitness Coach",
+        rating: 4.8,
+        talentScore: 83,
+        experience: 6,
+        rate: 44,
+        availability: "Morning slots",
+        bio: "Jayden creates strength, mobility, and sustainable fitness plans for busy professionals and beginners.",
+        reviews: ["Motivating but realistic.", "Great form checks.", "I feel stronger."]
+      },
+      {
+        id: "exp-019",
+        name: "Maya Chen",
+        initials: "MC",
+        category: "Health & Wellness",
+        subcategory: "Nutrition Coach",
+        rating: 4.9,
+        talentScore: 89,
+        experience: 7,
+        rate: 52,
+        availability: "Available tomorrow",
+        bio: "Maya helps clients build balanced meal routines, manage energy, and improve habits without extreme dieting.",
+        reviews: ["Simple meal plans.", "Kind accountability.", "Practical for my schedule."]
+      }
+    ];
+
+    const defaultNotifications = [
+      {
+        id: "not-001",
+        title: "Booking Confirmed",
+        body: "Your coding mentor session has been confirmed.",
+        time: "Just now",
+        icon: "✓"
+      },
+      {
+        id: "not-002",
+        title: "Expert Accepted Request",
+        body: "Aisha Rahman accepted your tutoring request.",
+        time: "12 min ago",
+        icon: "A"
+      },
+      {
+        id: "not-003",
+        title: "Session Starts in 30 Minutes",
+        body: "Prepare your notes before the online meeting.",
+        time: "Today",
+        icon: "30"
+      },
+      {
+        id: "not-004",
+        title: "New Message Received",
+        body: "Priya sent setup questions for your app project.",
+        time: "Yesterday",
+        icon: "M"
+      }
+    ];
+
+    const defaultMessages = [
+      {
+        id: "conv-001",
+        expertId: "exp-004",
+        messages: [
+          { from: "expert", text: "Hi, I can help you plan the JavaScript project.", time: "9:10 AM" },
+          { from: "me", text: "Great. I want a practical learning roadmap.", time: "9:12 AM" },
+          { from: "expert", text: "Perfect. Bring one project idea and we will shape it together.", time: "9:14 AM" }
+        ]
+      },
+      {
+        id: "conv-002",
+        expertId: "exp-007",
+        messages: [
+          { from: "expert", text: "Can you share the core app features you need first?", time: "10:20 AM" },
+          { from: "me", text: "Login, booking, chat, and payments later.", time: "10:23 AM" }
+        ]
+      },
+      {
+        id: "conv-003",
+        expertId: "exp-011",
+        messages: [
+          { from: "expert", text: "I have a same-day slot at 2:00 PM for the wiring check.", time: "11:02 AM" },
+          { from: "me", text: "That works. I will book it now.", time: "11:06 AM" }
+        ]
+      }
+    ];
+
+    let appState = {
+      route: "home",
+      currentUser: null,
+      selectedExpertId: null,
+      selectedCategory: "All",
+      selectedConversationId: "conv-001",
+      bookingMode: "Online",
+      selectedSlot: null
+    };
+
+    const mainContent = document.getElementById("mainContent");
+    const appScreen = document.getElementById("appScreen");
+    const loginScreen = document.getElementById("loginScreen");
+    const signupScreen = document.getElementById("signupScreen");
+    const bottomNav = document.getElementById("bottomNav");
+    const toast = document.getElementById("toast");
+    const headerTitle = document.getElementById("headerTitle");
+    const headerEyebrow = document.getElementById("headerEyebrow");
+    const splashScreen = document.getElementById("splashScreen");
+
+    function getStorage(key, fallback) {
+      try {
+        const raw = localStorage.getItem(key);
+        return raw ? JSON.parse(raw) : fallback;
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function setStorage(key, value) {
+      localStorage.setItem(key, JSON.stringify(value));
+    }
+
+    function seedStorage() {
+      if (!localStorage.getItem(STORAGE_KEYS.users)) {
+        setStorage(STORAGE_KEYS.users, [
+          {
+            id: "user-demo",
+            name: "Demo User",
+            email: "demo@talentbridge.app",
+            phone: "+60 12 345 6789",
+            password: "demo123",
+            talentScore: 84
+          }
+        ]);
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.messages)) {
+        setStorage(STORAGE_KEYS.messages, defaultMessages);
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.notifications)) {
+        setStorage(STORAGE_KEYS.notifications, defaultNotifications);
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.bookings)) {
+        setStorage(STORAGE_KEYS.bookings, []);
+      }
+
+      if (!localStorage.getItem(STORAGE_KEYS.applications)) {
+        setStorage(STORAGE_KEYS.applications, []);
+      }
+    }
+
+    function currentUser() {
+      return getStorage(STORAGE_KEYS.session, null);
+    }
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.add("show");
+      window.clearTimeout(showToast.timer);
+      showToast.timer = window.setTimeout(() => {
+        toast.classList.remove("show");
+      }, 2600);
+    }
+
+    function scoreLevel(score) {
+      if (score >= 90) {
+        return "Elite";
+      }
+      if (score >= 80) {
+        return "Trusted";
+      }
+      if (score >= 70) {
+        return "Verified";
+      }
+      return "Active";
+    }
+
+    function money(value) {
+      return "RM " + value + "/hr";
+    }
+
+    function moneyAmount(value) {
+      return "RM " + Math.round(value);
+    }
+
+    function durationHours(duration) {
+      const map = {
+        "30 minutes": 0.5,
+        "1 hour": 1,
+        "90 minutes": 1.5,
+        "2 hours": 2
+      };
+      return map[duration] || 1;
+    }
+
+    function getInitials(value) {
+      const cleanValue = String(value || "").trim();
+      if (!cleanValue) {
+        return "TB";
+      }
+
+      const namePart = cleanValue.includes("@") ? cleanValue.split("@")[0] : cleanValue;
+      const words = namePart.replace(/[^a-zA-Z0-9 ]/g, " ").split(/\s+/).filter(Boolean);
+      if (!words.length) {
+        return "TB";
+      }
+
+      return words.slice(0, 2).map((word) => word.charAt(0).toUpperCase()).join("");
+    }
+
+    function serviceIconSvg(group) {
+      const icons = {
+        Education: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5 12 3l8 3.5-8 3.5-8-3.5Z"></path><path d="M6 9v5c1.7 1.7 3.7 2.5 6 2.5s4.3-.8 6-2.5V9"></path><path d="M20 7v6"></path></svg>`,
+        Freelancers: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v1"></path><rect x="3" y="6" width="18" height="14" rx="3"></rect><path d="M3 12h18"></path><path d="M10 12v2h4v-2"></path></svg>`,
+        "Home Services": `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 3l9 8"></path><path d="M5 10v10h14V10"></path><path d="M9 20v-6h6v6"></path></svg>`,
+        Business: `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5"></path><path d="M4 19h16"></path><path d="M8 16v-4"></path><path d="M12 16V8"></path><path d="M16 16v-6"></path></svg>`,
+        "Health & Wellness": `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.8 8.6c0 5.4-8.8 10.4-8.8 10.4S3.2 14 3.2 8.6A4.6 4.6 0 0 1 12 6.7a4.6 4.6 0 0 1 8.8 1.9Z"></path><path d="M8 12h3l1-2 2 4 1-2h2"></path></svg>`
+      };
+      return icons[group] || `<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"></circle><path d="M12 8v8"></path><path d="M8 12h8"></path></svg>`;
+    }
+
+    function todayIso() {
+      const now = new Date();
+      const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+      return localDate.toISOString().slice(0, 10);
+    }
+
+    function getExpert(id) {
+      return experts.find((expert) => expert.id === id) || experts[0];
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function avatar(expert, sizeClass = "") {
+      return `<div class="avatar ${sizeClass}">${escapeHtml(expert.initials)}</div>`;
+    }
+
+    function renderAppChrome(routeTitle, eyebrow = "TalentBridge") {
+      headerTitle.textContent = routeTitle;
+      headerEyebrow.textContent = eyebrow;
+      bottomNav.classList.add("show");
+      document.querySelectorAll(".nav-item").forEach((item) => {
+        item.classList.toggle("active", item.dataset.route === appState.route);
+      });
+    }
+
+    function showScreen(screenName) {
+      [loginScreen, signupScreen, appScreen].forEach((screen) => {
+        screen.classList.remove("active");
+      });
+
+      if (screenName === "login") {
+        document.body.classList.add("auth-mode");
+        loginScreen.classList.add("active");
+        bottomNav.classList.remove("show");
+      }
+
+      if (screenName === "signup") {
+        document.body.classList.add("auth-mode");
+        signupScreen.classList.add("active");
+        bottomNav.classList.remove("show");
+      }
+
+      if (screenName === "app") {
+        document.body.classList.remove("auth-mode");
+        appScreen.classList.add("active");
+      }
+    }
+
+    function navigate(route, data = {}) {
+      appState.route = route;
+
+      if (data.expertId) {
+        appState.selectedExpertId = data.expertId;
+      }
+
+      if (route === "login" || route === "signup") {
+        showScreen(route);
+        return;
+      }
+
+      if (!currentUser()) {
+        showScreen("login");
+        return;
+      }
+
+      showScreen("app");
+      renderRoute();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderRoute() {
+      const routes = {
+        home: renderHome,
+        search: renderHireExperts,
+        profileView: renderExpertProfile,
+        booking: renderBooking,
+        bookings: renderBookings,
+        join: renderJoinExpert,
+        chat: renderChat,
+        notifications: renderNotifications,
+        business: renderBusinessInfo,
+        sdg: renderSdgImpact,
+        profile: renderProfile
+      };
+
+      const renderer = routes[appState.route] || renderHome;
+      renderer();
+    }
+
+    function renderHome() {
+      renderAppChrome("Dashboard", "Learn, Hire, Earn, and Connect");
+      const featured = experts.filter((expert) => expert.talentScore >= 88).slice(0, 6);
+      const user = currentUser();
+      const bookingCount = getStorage(STORAGE_KEYS.bookings, []).filter((booking) => booking.status !== "Cancelled").length;
+
+      mainContent.innerHTML = `
+        <section class="hero-card fade-in">
+          <div class="welcome-row">
+            <span class="welcome-pill">Hi ${escapeHtml((user?.name || "there").split(" ")[0])}</span>
+            <span class="welcome-pill">TalentScore™ ${user?.talentScore || 84}</span>
+          </div>
+          <h2>What do you need help with today?</h2>
+          <p>Start with a service. TalentBridge will show trusted people, clear prices, and available times.</p>
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+            <input id="homeSearchInput" type="search" placeholder="Example: math tutor, plumber, web developer">
+            <button class="btn btn-primary" type="button" id="homeSearchButton">Search</button>
+          </div>
+          <div class="suggestion-row" aria-label="Popular searches">
+            ${popularSearches.map((term) => `<button class="suggestion-chip" type="button" data-suggest="${escapeHtml(term)}">${escapeHtml(term)}</button>`).join("")}
+          </div>
+        </section>
+
+        <div class="organized-stack fade-in">
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Start here</h2>
+                <p>Most people only need one of these.</p>
+              </div>
+            </div>
+            <div class="primary-actions">
+              <button class="action-row" type="button" data-route="search">
+                <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="m19 8 2 2 3-4"></path></svg></span>
+                <span><span class="action-title">I need to hire someone</span><span class="action-caption">Find a tutor, freelancer, technician, coach, or advisor.</span></span>
+                <span class="action-arrow">›</span>
+              </button>
+              <button class="action-row" type="button" data-route="bookings">
+                <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 2v4"></path><path d="M16 2v4"></path><rect x="3" y="4" width="18" height="18" rx="3"></rect><path d="M3 10h18"></path><path d="m8 15 2 2 5-5"></path></svg></span>
+                <span><span class="action-title">Check my bookings</span><span class="action-caption">${bookingCount ? `${bookingCount} active booking${bookingCount === 1 ? "" : "s"}` : "No active bookings yet"}</span></span>
+                <span class="action-arrow">›</span>
+              </button>
+              <button class="action-row" type="button" data-route="join">
+                <span class="action-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2v20"></path><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7H14a3.5 3.5 0 0 1 0 7H6"></path></svg></span>
+                <span><span class="action-title">I want to earn as an expert</span><span class="action-caption">Apply once and list your skills.</span></span>
+                <span class="action-arrow">›</span>
+              </button>
+            </div>
+          </section>
+
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Choose a service</h2>
+                <p>Tap the area that matches what you need.</p>
+              </div>
+            </div>
+            <div class="service-list">
+              ${categories.map(renderServiceRow).join("")}
+            </div>
+          </section>
+
+          <section class="content-block plain">
+            <div class="block-head">
+              <div>
+                <h2>Recommended experts</h2>
+                <p>High TalentScore™ experts with strong ratings.</p>
+              </div>
+              <button class="text-link" type="button" data-route="search">View all</button>
+            </div>
+            <div class="carousel">
+              ${featured.map(renderExpertMini).join("")}
+            </div>
+          </section>
+
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Your account at a glance</h2>
+                <p>Simple status without digging through menus.</p>
+              </div>
+            </div>
+            <div class="mini-status-grid">
+              <div class="mini-status"><strong>${experts.length}</strong><span>experts available</span></div>
+              <div class="mini-status"><strong>${bookingCount}</strong><span>active bookings</span></div>
+              <div class="mini-status"><strong>${user?.talentScore || 84}</strong><span>your TalentScore™</span></div>
+              <div class="mini-status"><strong>${categories.reduce((total, category) => total + category.items.length, 0)}</strong><span>service types</span></div>
+            </div>
+          </section>
+
+          <section class="content-block plain">
+            ${renderTalentScoreCard(user?.talentScore || 84)}
+          </section>
+        </div>
+      `;
+
+      document.getElementById("homeSearchButton").addEventListener("click", () => {
+        const query = document.getElementById("homeSearchInput").value.trim();
+        appState.searchQuery = query;
+        navigate("search");
+      });
+
+      document.getElementById("homeSearchInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("homeSearchButton").click();
+        }
+      });
+
+      document.querySelectorAll("[data-suggest]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("homeSearchInput").value = button.dataset.suggest;
+          document.getElementById("homeSearchButton").click();
+        });
+      });
+    }
+
+    function renderExpertMini(expert) {
+      return `
+        <article class="expert-mini">
+          <div class="expert-top">
+            ${avatar(expert)}
+            <div class="expert-meta">
+              <h3>${escapeHtml(expert.name)}</h3>
+              <p>${escapeHtml(expert.subcategory)}</p>
+            </div>
+          </div>
+          <div class="badge-line">
+            <span class="badge gold">★ ${expert.rating}</span>
+            <span class="badge">${scoreLevel(expert.talentScore)} ${expert.talentScore}</span>
+          </div>
+          <button class="btn btn-navy btn-full" type="button" data-profile="${expert.id}">View Profile</button>
+        </article>
+      `;
+    }
+
+    function renderCategoryCard(category) {
+      return `
+        <button class="category-card" type="button" data-category="${escapeHtml(category.group)}">
+          <div class="category-icon">${serviceIconSvg(category.group)}</div>
+          <div>
+            <h3>${escapeHtml(category.group)}</h3>
+            <p>${escapeHtml(category.items.slice(0, 2).join(" · "))} · ${category.items.length} services</p>
+          </div>
+        </button>
+      `;
+    }
+
+    function renderServiceRow(category) {
+      return `
+        <button class="service-row" type="button" data-category="${escapeHtml(category.group)}">
+          <span class="service-icon">${serviceIconSvg(category.group)}</span>
+          <span>
+            <h3>${escapeHtml(category.group)}</h3>
+            <p>${escapeHtml(category.items.slice(0, 3).join(", "))}</p>
+          </span>
+          <span class="action-arrow">›</span>
+        </button>
+      `;
+    }
+
+    function renderTalentScoreCard(score) {
+      const level = scoreLevel(score);
+      return `
+        <article class="score-card">
+          <div class="score-row">
+            <div>
+              <div class="eyebrow">TalentScore™ System</div>
+              <h2 class="section-title">Reputation that travels with you</h2>
+            </div>
+            <div class="score-big">${score}</div>
+          </div>
+          <div class="score-meter" style="--score-width:${score}%"><span></span></div>
+          <div class="badge-line">
+            <span class="badge gold">${level}</span>
+            <span class="badge">Elite 90+</span>
+            <span class="badge">Trusted 80+</span>
+            <span class="badge">Verified 70+</span>
+            <span class="badge">Active 60+</span>
+          </div>
+          <p class="section-note">TalentScore™ blends ratings, completed bookings, verified skills, response quality, reliability, and repeat client trust into a simple score out of 100.</p>
+        </article>
+      `;
+    }
+
+    function renderHireExperts() {
+      renderAppChrome("Hire Expert", "Search trusted talent");
+      const allGroups = ["All", ...categories.map((category) => category.group)];
+      const query = (appState.searchQuery || "").toLowerCase();
+      const filtered = experts.filter((expert) => {
+        const categoryMatch = appState.selectedCategory === "All" || expert.category === appState.selectedCategory;
+        const queryMatch = !query || [expert.name, expert.category, expert.subcategory, expert.bio].join(" ").toLowerCase().includes(query);
+        return categoryMatch && queryMatch;
+      });
+
+      mainContent.innerHTML = `
+        <section class="toolbar">
+          <div class="search-box">
+            <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="m16.5 16.5 4 4"></path></svg>
+            <input id="expertSearchInput" type="search" placeholder="Search expert category or name" value="${escapeHtml(appState.searchQuery || "")}">
+            <button class="btn btn-primary" type="button" id="expertSearchButton">Search</button>
+          </div>
+          <div class="results-summary">
+            <div>
+              <strong>${filtered.length} experts found</strong>
+              <p class="section-note">Grouped by service so you can scan faster.</p>
+            </div>
+            <span class="badge gold">${escapeHtml(appState.selectedCategory)}</span>
+          </div>
+          <div class="filter-row">
+            ${allGroups.map((group) => `<button class="chip ${group === appState.selectedCategory ? "active" : ""}" type="button" data-filter="${escapeHtml(group)}">${escapeHtml(group)}</button>`).join("")}
+          </div>
+        </section>
+
+        ${renderExpertResults(filtered)}
+      `;
+
+      document.getElementById("expertSearchButton").addEventListener("click", () => {
+        appState.searchQuery = document.getElementById("expertSearchInput").value.trim();
+        renderHireExperts();
+      });
+
+      document.getElementById("expertSearchInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          document.getElementById("expertSearchButton").click();
+        }
+      });
+
+      document.querySelectorAll("[data-suggest]").forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("expertSearchInput").value = button.dataset.suggest;
+          document.getElementById("expertSearchButton").click();
+        });
+      });
+    }
+
+    function renderExpertResults(filtered) {
+      if (!filtered.length) {
+        return `<section class="empty-state"><div class="empty-illustration"><div class="calendar"></div><div class="dot one"></div><div class="dot two"></div><div class="line"></div></div><h2 class="section-title">No experts found</h2><p class="section-note">Try another category or search term.</p><button class="btn btn-primary" type="button" data-filter="All">Show all experts</button></section>`;
+      }
+
+      if (appState.selectedCategory !== "All") {
+        return `<section class="expert-grid">${filtered.map(renderExpertCard).join("")}</section>`;
+      }
+
+      return categories.map((category) => {
+        const groupExperts = filtered.filter((expert) => expert.category === category.group);
+        if (!groupExperts.length) {
+          return "";
+        }
+
+        return `
+          <section class="expert-group">
+            <div class="group-label">
+              <h2>${escapeHtml(category.group)}</h2>
+              <span class="badge soft">${groupExperts.length} expert${groupExperts.length === 1 ? "" : "s"}</span>
+            </div>
+            <div class="expert-grid">
+              ${groupExperts.map(renderExpertCard).join("")}
+            </div>
+          </section>
+        `;
+      }).join("");
+    }
+
+    function renderExpertCard(expert) {
+      const recommended = expert.talentScore >= 90;
+      return `
+        <article class="expert-card ${recommended ? "recommended" : ""}">
+          <div class="expert-top">
+            ${avatar(expert)}
+            <div class="expert-meta">
+              <h3>${escapeHtml(expert.name)}</h3>
+              <p>${escapeHtml(expert.subcategory)} · ${expert.experience} yrs exp</p>
+            </div>
+          </div>
+          <div class="badge-line">
+            ${recommended ? `<span class="badge gold">Recommended</span>` : ""}
+            <span class="badge gold">★ ${expert.rating}</span>
+            <span class="badge">${scoreLevel(expert.talentScore)} ${expert.talentScore}</span>
+            <span class="badge success">${escapeHtml(expert.availability)}</span>
+          </div>
+          <p>${escapeHtml(expert.bio)}</p>
+          <div class="expert-facts">
+            <div class="expert-fact"><strong>${expert.experience} yrs</strong><span>Experience</span></div>
+            <div class="expert-fact"><strong>${scoreLevel(expert.talentScore)}</strong><span>Badge</span></div>
+            <div class="expert-fact"><strong>${moneyAmount(expert.rate)}</strong><span>Hourly</span></div>
+          </div>
+          <div class="expert-price-row">
+            <strong>${money(expert.rate)}</strong>
+            <span class="badge soft">${escapeHtml(expert.category)}</span>
+          </div>
+          <div class="expert-card-actions">
+            <button class="btn btn-outline" type="button" data-profile="${expert.id}">Details</button>
+            <button class="btn btn-primary" type="button" data-book="${expert.id}">Book Now</button>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderExpertProfile() {
+      const expert = getExpert(appState.selectedExpertId);
+      renderAppChrome(expert.name, expert.subcategory);
+
+      mainContent.innerHTML = `
+        <section class="profile-hero fade-in">
+          <div class="profile-cover"></div>
+          <div class="profile-body">
+            ${avatar(expert, "large")}
+            <div>
+              <h2>${escapeHtml(expert.name)}</h2>
+              <p>${escapeHtml(expert.subcategory)} · ${expert.experience} years of experience</p>
+            </div>
+            <div class="badge-line" style="justify-content:center;">
+              <span class="badge gold">★ ${expert.rating}</span>
+              <span class="badge">${scoreLevel(expert.talentScore)} TalentScore™ ${expert.talentScore}</span>
+              <span class="badge success">${escapeHtml(expert.availability)}</span>
+            </div>
+            <div class="profile-actions">
+              <button class="btn btn-primary" type="button" data-book="${expert.id}">Book Now</button>
+              <button class="btn btn-outline" type="button" data-message="${expert.id}">Message</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="details-grid">
+          <article class="detail-card">
+            <h3>About</h3>
+            <p>${escapeHtml(expert.bio)}</p>
+          </article>
+          <article class="detail-card">
+            <h3>TalentScore™ Badge</h3>
+            ${renderTalentScoreCard(expert.talentScore)}
+          </article>
+          <article class="detail-card">
+            <h3>Reviews</h3>
+            ${expert.reviews.map((review) => `<div class="review"><strong>★ Verified review</strong><p>${escapeHtml(review)}</p></div>`).join("")}
+          </article>
+        </section>
+      `;
+    }
+
+    function availableSlotsFor(dateValue, expertId) {
+      const baseSlots = ["10:00 AM", "11:00 AM", "12:00 PM", "1:00 PM", "2:00 PM", "4:00 PM", "6:00 PM"];
+      const unavailable = new Set(["12:00 PM", "1:00 PM"]);
+      const day = new Date(dateValue + "T00:00:00").getDay();
+
+      if (day === 0) {
+        unavailable.add("10:00 AM");
+        unavailable.add("11:00 AM");
+      }
+
+      if (day === 6) {
+        unavailable.add("6:00 PM");
+      }
+
+      const bookings = getStorage(STORAGE_KEYS.bookings, []);
+      bookings
+        .filter((booking) => booking.expertId === expertId && booking.date === dateValue && booking.status !== "Cancelled")
+        .forEach((booking) => unavailable.add(booking.time));
+
+      return baseSlots.map((time) => ({
+        time,
+        available: !unavailable.has(time)
+      }));
+    }
+
+    function renderBooking() {
+      const expert = getExpert(appState.selectedExpertId);
+      renderAppChrome("Book Expert", expert.name);
+      appState.selectedSlot = null;
+
+      mainContent.innerHTML = `
+        <section class="booking-layout">
+          <article class="expert-card">
+            <div class="expert-top">
+              ${avatar(expert)}
+              <div class="expert-meta">
+                <h3>${escapeHtml(expert.name)}</h3>
+                <p>${escapeHtml(expert.subcategory)} · ${money(expert.rate)}</p>
+              </div>
+            </div>
+            <div class="badge-line">
+              <span class="badge gold">★ ${expert.rating}</span>
+              <span class="badge">${scoreLevel(expert.talentScore)} ${expert.talentScore}</span>
+            </div>
+            <p>${escapeHtml(expert.bio)}</p>
+          </article>
+
+          <form id="bookingForm" class="detail-card form-grid">
+            <h2 class="section-title">Smart Booking</h2>
+            <div class="booking-helper">
+              <strong>Pick a highlighted time to continue.</strong>
+              <span>Grey times are already taken or outside this expert's working hours.</span>
+            </div>
+            <div class="field">
+              <label for="bookingDate">Date</label>
+              <input id="bookingDate" class="input" type="date" min="${todayIso()}" value="${todayIso()}" required>
+            </div>
+            <div class="field">
+              <label>Time slot</label>
+              <div id="slotGrid" class="slot-grid"></div>
+            </div>
+            <div class="field">
+              <label for="durationSelect">Duration</label>
+              <select id="durationSelect" class="select">
+                <option>30 minutes</option>
+                <option selected>1 hour</option>
+                <option>90 minutes</option>
+                <option>2 hours</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Session type</label>
+              <div class="segmented">
+                <button class="segment active" type="button" data-mode="Online">Online</button>
+                <button class="segment" type="button" data-mode="In Person">In Person</button>
+              </div>
+            </div>
+            <div id="bookingSummary" class="booking-summary" aria-live="polite"></div>
+            <button class="btn btn-primary btn-full" type="submit">Confirm Booking</button>
+          </form>
+        </section>
+      `;
+
+      hydrateSlots(expert.id);
+    }
+
+    function hydrateSlots(expertId) {
+      const dateInput = document.getElementById("bookingDate");
+      const slotGrid = document.getElementById("slotGrid");
+      const form = document.getElementById("bookingForm");
+      const durationSelect = document.getElementById("durationSelect");
+      const summary = document.getElementById("bookingSummary");
+      const expert = getExpert(expertId);
+
+      function updateSummary() {
+        const duration = durationSelect.value;
+        const estimatedTotal = expert.rate * durationHours(duration);
+        summary.innerHTML = `
+          <h3>Booking summary</h3>
+          <p>Review the basics before you confirm.</p>
+          <div class="booking-summary-grid">
+            <div class="booking-summary-item"><span>Expert</span><strong>${escapeHtml(expert.name)}</strong></div>
+            <div class="booking-summary-item"><span>Date</span><strong>${escapeHtml(dateInput.value)}</strong></div>
+            <div class="booking-summary-item"><span>Time</span><strong>${escapeHtml(appState.selectedSlot || "Choose a slot")}</strong></div>
+            <div class="booking-summary-item"><span>Estimate</span><strong>${moneyAmount(estimatedTotal)}</strong></div>
+          </div>
+        `;
+      }
+
+      function drawSlots() {
+        const slots = availableSlotsFor(dateInput.value, expertId);
+        slotGrid.innerHTML = slots.map((slot) => `
+          <button class="slot ${slot.available ? "available" : "unavailable"}" type="button" data-slot="${slot.time}" ${slot.available ? "" : "disabled"}>
+            ${slot.time}
+            ${slot.available ? "" : "<br><small>Unavailable</small>"}
+          </button>
+        `).join("");
+        appState.selectedSlot = null;
+        updateSummary();
+      }
+
+      drawSlots();
+
+      dateInput.addEventListener("change", drawSlots);
+      durationSelect.addEventListener("change", updateSummary);
+
+      slotGrid.addEventListener("click", (event) => {
+        const button = event.target.closest(".slot.available");
+        if (!button) {
+          return;
+        }
+
+        appState.selectedSlot = button.dataset.slot;
+        slotGrid.querySelectorAll(".slot").forEach((slot) => slot.classList.remove("selected"));
+        button.classList.add("selected");
+        updateSummary();
+      });
+
+      document.querySelectorAll(".segment").forEach((segment) => {
+        segment.addEventListener("click", () => {
+          appState.bookingMode = segment.dataset.mode;
+          document.querySelectorAll(".segment").forEach((item) => item.classList.remove("active"));
+          segment.classList.add("active");
+          updateSummary();
+        });
+      });
+
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        if (!appState.selectedSlot) {
+          showToast("Please choose an available time slot.");
+          return;
+        }
+
+        const expert = getExpert(expertId);
+        const booking = {
+          id: "booking-" + Date.now(),
+          expertId,
+          expertName: expert.name,
+          category: expert.subcategory,
+          date: dateInput.value,
+          time: appState.selectedSlot,
+          duration: document.getElementById("durationSelect").value,
+          mode: appState.bookingMode,
+          estimatedTotal: expert.rate * durationHours(document.getElementById("durationSelect").value),
+          status: "Confirmed"
+        };
+
+        const bookings = getStorage(STORAGE_KEYS.bookings, []);
+        bookings.unshift(booking);
+        setStorage(STORAGE_KEYS.bookings, bookings);
+
+        const notifications = getStorage(STORAGE_KEYS.notifications, []);
+        notifications.unshift({
+          id: "not-" + Date.now(),
+          title: "Booking Confirmed",
+          body: `${expert.name} is booked for ${booking.date} at ${booking.time}.`,
+          time: "Just now",
+          icon: "✓"
+        });
+        setStorage(STORAGE_KEYS.notifications, notifications);
+
+        showToast("Booking confirmed successfully.");
+        navigate("bookings");
+      });
+    }
+
+    function renderBookings() {
+      renderAppChrome("My Bookings", "Manage sessions");
+      const bookings = getStorage(STORAGE_KEYS.bookings, []);
+
+      if (!bookings.length) {
+        mainContent.innerHTML = `
+          <section class="empty-state fade-in">
+            <div class="empty-illustration">
+              <div class="calendar"></div>
+              <div class="dot one"></div>
+              <div class="dot two"></div>
+              <div class="line"></div>
+            </div>
+            <div>
+              <h2 class="section-title">You don't have any bookings yet.</h2>
+              <p class="section-note">Find an expert and reserve a trusted session in a few taps.</p>
+            </div>
+            <button class="btn btn-primary" type="button" data-route="search">Hire Expert</button>
+          </section>
+        `;
+        return;
+      }
+
+      mainContent.innerHTML = `
+        <section class="expert-grid">
+          ${bookings.map(renderBookingCard).join("")}
+        </section>
+      `;
+    }
+
+    function renderBookingCard(booking) {
+      const expert = getExpert(booking.expertId);
+      return `
+        <article class="booking-card">
+          <div class="booking-card-head">
+            <div class="expert-top">
+              ${avatar(expert)}
+              <div class="expert-meta">
+                <h3>${escapeHtml(booking.expertName)}</h3>
+                <p>${escapeHtml(booking.category)} · ${escapeHtml(booking.mode)}</p>
+              </div>
+            </div>
+            <span class="badge ${booking.status === "Cancelled" ? "" : "success"}">${escapeHtml(booking.status)}</span>
+          </div>
+          <div class="badge-line">
+            <span class="badge">${escapeHtml(booking.date)}</span>
+            <span class="badge gold">${escapeHtml(booking.time)}</span>
+            <span class="badge">${escapeHtml(booking.duration)}</span>
+            ${booking.estimatedTotal ? `<span class="badge">${moneyAmount(booking.estimatedTotal)} est.</span>` : ""}
+          </div>
+          ${booking.status === "Cancelled" ? "" : `<button class="btn btn-danger btn-full" type="button" data-cancel="${booking.id}">Cancel Booking</button>`}
+        </article>
+      `;
+    }
+
+    function renderJoinExpert() {
+      renderAppChrome("Join As Expert", "Earn with TalentBridge");
+
+      mainContent.innerHTML = `
+        <section class="detail-card">
+          <div class="section-head">
+            <div>
+              <h2 class="section-title">Professional application</h2>
+              <p class="section-note">Share your expertise, pricing, credentials, and working availability.</p>
+            </div>
+          </div>
+          <div id="applicationSuccess" class="application-success">Application Submitted Successfully.</div>
+          <form id="expertApplicationForm" class="form-grid">
+            <h3 class="section-title">Personal Details</h3>
+            <div class="field">
+              <label for="appName">Full Name</label>
+              <input id="appName" class="input" type="text" required>
+            </div>
+            <div class="field">
+              <label for="appEmail">Email</label>
+              <input id="appEmail" class="input" type="email" required>
+            </div>
+            <div class="field">
+              <label for="appPhone">Phone</label>
+              <input id="appPhone" class="input" type="tel" required>
+            </div>
+            <div class="field">
+              <label for="appCountry">Country</label>
+              <input id="appCountry" class="input" type="text" placeholder="Malaysia" required>
+            </div>
+
+            <h3 class="section-title">Professional Details</h3>
+            <div class="field">
+              <label for="appCategory">Category</label>
+              <select id="appCategory" class="select" required>
+                ${categories.map((category) => `<option>${escapeHtml(category.group)}</option>`).join("")}
+              </select>
+            </div>
+            <div class="field">
+              <label for="appSubcategory">Subcategory</label>
+              <input id="appSubcategory" class="input" type="text" placeholder="Coding Mentor" required>
+            </div>
+            <div class="field">
+              <label for="appExperience">Experience</label>
+              <input id="appExperience" class="input" type="text" placeholder="5 years" required>
+            </div>
+            <div class="field">
+              <label for="appSkills">Skills</label>
+              <textarea id="appSkills" class="textarea" placeholder="List your key skills" required></textarea>
+            </div>
+
+            <h3 class="section-title">Pricing</h3>
+            <div class="field">
+              <label for="appRate">Hourly Rate</label>
+              <input id="appRate" class="input" type="number" min="1" placeholder="50" required>
+            </div>
+
+            <h3 class="section-title">Uploads</h3>
+            <div class="field">
+              <label for="appPhoto">Profile Photo</label>
+              <input id="appPhoto" class="input" type="file" accept="image/*">
+            </div>
+            <div class="field">
+              <label for="appCertificates">Certificates</label>
+              <input id="appCertificates" class="input" type="file" multiple>
+            </div>
+
+            <h3 class="section-title">Availability</h3>
+            <div class="field">
+              <label for="appDays">Working Days</label>
+              <input id="appDays" class="input" type="text" placeholder="Monday to Friday" required>
+            </div>
+            <div class="field">
+              <label for="appHours">Working Hours</label>
+              <input id="appHours" class="input" type="text" placeholder="10:00 AM - 6:00 PM" required>
+            </div>
+            <button class="btn btn-primary btn-full" type="submit">Submit Application</button>
+          </form>
+        </section>
+      `;
+
+      document.getElementById("expertApplicationForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const application = {
+          id: "application-" + Date.now(),
+          name: document.getElementById("appName").value,
+          email: document.getElementById("appEmail").value,
+          phone: document.getElementById("appPhone").value,
+          country: document.getElementById("appCountry").value,
+          category: document.getElementById("appCategory").value,
+          subcategory: document.getElementById("appSubcategory").value,
+          experience: document.getElementById("appExperience").value,
+          skills: document.getElementById("appSkills").value,
+          rate: document.getElementById("appRate").value,
+          workingDays: document.getElementById("appDays").value,
+          workingHours: document.getElementById("appHours").value,
+          submittedAt: new Date().toISOString()
+        };
+
+        const applications = getStorage(STORAGE_KEYS.applications, []);
+        applications.unshift(application);
+        setStorage(STORAGE_KEYS.applications, applications);
+
+        document.getElementById("applicationSuccess").classList.add("show");
+        event.target.reset();
+        showToast("Application submitted successfully.");
+      });
+    }
+
+    function renderBusinessInfo() {
+      renderAppChrome("Business Info", "Trust, value, and revenue model");
+
+      mainContent.innerHTML = `
+        <section class="sdg-hero fade-in">
+          <span class="sdg-badge">About TalentBridge</span>
+          <h2>A trusted marketplace for learning, hiring, earning, and connecting.</h2>
+          <p>TalentBridge helps people find skilled experts, compare trusted profiles, book services clearly, and build reputation through TalentScore™.</p>
+        </section>
+
+        <section class="organized-stack">
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Why people can trust TalentBridge</h2>
+                <p>Designed for safe hiring, clearer decisions, and reliable experts.</p>
+              </div>
+            </div>
+            <div class="trust-grid">
+              <article class="trust-card"><div class="trust-icon">V</div><h3>Verified profiles</h3><p>Experts can show skills, certificates, experience, reviews, and availability before users book.</p></article>
+              <article class="trust-card"><div class="trust-icon">S</div><h3>TalentScore™</h3><p>A simple reputation score helps users compare reliability, quality, and trust faster.</p></article>
+              <article class="trust-card"><div class="trust-icon">B</div><h3>Clear booking flow</h3><p>Users choose date, time, duration, and session type before confirming a booking.</p></article>
+              <article class="trust-card"><div class="trust-icon">C</div><h3>Built-in communication</h3><p>Chat keeps customer and expert communication inside the platform.</p></article>
+            </div>
+          </section>
+
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Business model</h2>
+                <p>How TalentBridge can generate revenue and reach customers.</p>
+              </div>
+            </div>
+            <div class="impact-grid">
+              <article class="impact-card"><div class="impact-icon">1</div><h3>Booking commission</h3><p>TalentBridge can earn a small fee from each successful booking between customer and expert.</p></article>
+              <article class="impact-card"><div class="impact-icon">2</div><h3>Featured expert listings</h3><p>Experts can pay for higher visibility when they want more clients.</p></article>
+              <article class="impact-card"><div class="impact-icon">3</div><h3>Premium verification</h3><p>Professionals can upgrade for certificate checks, profile badges, and advanced credibility tools.</p></article>
+            </div>
+          </section>
+
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Unique value</h2>
+                <p>What makes TalentBridge different from a simple listing page.</p>
+              </div>
+            </div>
+            <div class="impact-grid">
+              <article class="impact-card"><div class="impact-icon">A</div><h3>All-in-one service marketplace</h3><p>Users can learn, hire, earn, and connect across education, freelance, home service, business, and wellness needs.</p></article>
+              <article class="impact-card"><div class="impact-icon">R</div><h3>Reputation travels with users</h3><p>TalentScore™ gives experts a portable trust signal that improves as they complete bookings and earn reviews.</p></article>
+              <article class="impact-card"><div class="impact-icon">F</div><h3>Fast decision making</h3><p>Clear profiles, availability, prices, booking status, and chat reduce confusion before customers commit.</p></article>
+            </div>
+          </section>
+        </section>
+      `;
+    }
+
+    function renderSdgImpact() {
+      renderAppChrome("SDG 8 Impact", "Decent work and economic growth");
+
+      mainContent.innerHTML = `
+        <section class="sdg-hero fade-in">
+          <span class="sdg-badge">UN SDG 8</span>
+          <h2>Promoting decent work through trusted digital opportunities.</h2>
+          <p>TalentBridge supports SDG 8 by helping skilled people earn income, helping customers find reliable services, and making informal work more visible, trusted, and organized.</p>
+        </section>
+
+        <section class="organized-stack">
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>How TalentBridge supports SDG 8</h2>
+                <p>These points can be used in your business plan discussion.</p>
+              </div>
+            </div>
+            <div class="impact-grid">
+              <article class="impact-card"><div class="impact-icon">1</div><h3>Creates earning opportunities</h3><p>Tutors, technicians, freelancers, coaches, and mentors can find customers and earn from verified skills.</p></article>
+              <article class="impact-card"><div class="impact-icon">2</div><h3>Supports decent work</h3><p>Profiles, reviews, booking records, and TalentScore™ help experts build professional credibility.</p></article>
+              <article class="impact-card"><div class="impact-icon">3</div><h3>Improves access to services</h3><p>Customers can find trusted help faster across education, home services, business, freelance, and wellness categories.</p></article>
+            </div>
+          </section>
+
+          <section class="content-block">
+            <div class="block-head">
+              <div>
+                <h2>Inclusive growth angle</h2>
+                <p>Why the business has social and economic value.</p>
+              </div>
+            </div>
+            <div class="trust-grid">
+              <article class="trust-card"><div class="trust-icon">Y</div><h3>Youth employment</h3><p>Students and young professionals can offer tutoring, design, coding, editing, and mentoring services.</p></article>
+              <article class="trust-card"><div class="trust-icon">L</div><h3>Local service income</h3><p>Electricians, plumbers, carpenters, and AC technicians can reach nearby customers more easily.</p></article>
+              <article class="trust-card"><div class="trust-icon">W</div><h3>Women and home-based work</h3><p>Flexible online services can support people who prefer remote or part-time earning options.</p></article>
+              <article class="trust-card"><div class="trust-icon">T</div><h3>Transparent reputation</h3><p>TalentScore™ encourages quality service, reliability, and repeat customer trust.</p></article>
+            </div>
+          </section>
+
+        </section>
+      `;
+    }
+
+    function renderChat() {
+      renderAppChrome("Chat", "Messages");
+      const conversations = getStorage(STORAGE_KEYS.messages, defaultMessages);
+      const activeConversation = conversations.find((conversation) => conversation.id === appState.selectedConversationId) || conversations[0];
+      const activeExpert = getExpert(activeConversation.expertId);
+
+      mainContent.innerHTML = `
+        <section class="chat-layout">
+          <div class="conversation-panel">
+            <div class="conversation-heading">
+              <h2>Inbox</h2>
+              <p>${conversations.length} active conversation${conversations.length === 1 ? "" : "s"}</p>
+            </div>
+            <div class="conversation-list">
+              ${conversations.map((conversation) => renderConversationRow(conversation, activeConversation.id)).join("")}
+            </div>
+          </div>
+          <article class="chat-panel">
+            <div class="chat-head">
+              ${avatar(activeExpert)}
+              <div class="expert-meta">
+                <h3>${escapeHtml(activeExpert.name)}</h3>
+                <p>${escapeHtml(activeExpert.availability)}</p>
+              </div>
+            </div>
+            <div id="chatMessages" class="chat-messages">
+              ${activeConversation.messages.map(renderBubble).join("")}
+            </div>
+            <form id="chatForm" class="chat-input">
+              <input id="chatText" class="input" type="text" placeholder="Type a message" required>
+              <button class="btn btn-primary" type="submit">Send</button>
+            </form>
+          </article>
+        </section>
+      `;
+
+      const messagesPanel = document.getElementById("chatMessages");
+      messagesPanel.scrollTop = messagesPanel.scrollHeight;
+
+      document.getElementById("chatForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const text = document.getElementById("chatText").value.trim();
+        if (!text) {
+          return;
+        }
+
+        const allConversations = getStorage(STORAGE_KEYS.messages, defaultMessages);
+        const target = allConversations.find((conversation) => conversation.id === activeConversation.id);
+        target.messages.push({
+          from: "me",
+          text,
+          time: new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+        });
+        setStorage(STORAGE_KEYS.messages, allConversations);
+        renderChat();
+      });
+    }
+
+    function renderConversationRow(conversation, activeId) {
+      const expert = getExpert(conversation.expertId);
+      const last = conversation.messages[conversation.messages.length - 1];
+      return `
+        <button class="message-row ${conversation.id === activeId ? "active" : ""}" type="button" data-conversation="${conversation.id}">
+          ${avatar(expert)}
+          <div class="message-info">
+            <div class="message-title-row">
+              <h3>${escapeHtml(expert.name)}</h3>
+              <span class="message-time">${escapeHtml(last.time)}</span>
+            </div>
+            <span class="badge soft">${escapeHtml(expert.subcategory)}</span>
+            <p>${escapeHtml(last.text)}</p>
+          </div>
+        </button>
+      `;
+    }
+
+    function renderBubble(message) {
+      return `
+        <div class="bubble ${message.from === "me" ? "me" : ""}">
+          ${escapeHtml(message.text)}
+          <div class="eyebrow" style="margin-top:4px;">${escapeHtml(message.time)}</div>
+        </div>
+      `;
+    }
+
+    function renderNotifications() {
+      renderAppChrome("Notifications", "Latest updates");
+      const notifications = getStorage(STORAGE_KEYS.notifications, defaultNotifications);
+
+      mainContent.innerHTML = `
+        <section class="notification-list">
+          ${notifications.map((notification) => `
+            <article class="notification-card">
+              <div class="notification-dot">${escapeHtml(notification.icon)}</div>
+              <div>
+                <h3>${escapeHtml(notification.title)}</h3>
+                <p>${escapeHtml(notification.body)}</p>
+                <div class="eyebrow" style="margin-top:6px;">${escapeHtml(notification.time)}</div>
+              </div>
+            </article>
+          `).join("")}
+        </section>
+      `;
+    }
+
+    function renderProfile() {
+      renderAppChrome("Profile", "Account");
+      const user = currentUser() || {};
+      const bookings = getStorage(STORAGE_KEYS.bookings, []);
+      const completedCount = bookings.filter((booking) => booking.status !== "Cancelled").length;
+      const profileInitials = getInitials(user.name || user.email || "TalentBridge User");
+
+      mainContent.innerHTML = `
+        <section class="profile-hero fade-in">
+          <div class="profile-cover"></div>
+          <div class="profile-body">
+            <div class="profile-avatar" aria-label="User avatar">${escapeHtml(profileInitials)}</div>
+            <div>
+              <h2>${escapeHtml(user.name || "TalentBridge User")}</h2>
+              <p>${escapeHtml(user.email || "demo@talentbridge.app")}</p>
+            </div>
+            <div class="badge-line" style="justify-content:center;">
+              <span class="badge gold">${scoreLevel(user.talentScore || 84)} TalentScore™ ${(user.talentScore || 84)}</span>
+            </div>
+            <div class="profile-brand-chip"><img src="logoTB.png" alt="TalentBridge logo"><span>TalentBridge member</span></div>
+          </div>
+        </section>
+
+        <section class="section profile-grid">
+          <article class="profile-stat">
+            <span>TalentScore™</span>
+            <strong>${user.talentScore || 84}</strong>
+          </article>
+          <article class="profile-stat">
+            <span>Bookings</span>
+            <strong>${completedCount}</strong>
+          </article>
+        </section>
+
+        <section class="section">
+          ${renderTalentScoreCard(user.talentScore || 84)}
+        </section>
+
+        <section class="section detail-card">
+          <h2 class="section-title">Booking history</h2>
+          <p class="section-note">${bookings.length ? "Your recent bookings are stored locally for this demo." : "No booking history yet."}</p>
+        </section>
+
+        <section class="section settings-list">
+          <div class="setting-row">
+            <div>
+              <strong>Dark mode</strong>
+              <p class="section-note" style="margin:2px 0 0;">Switch between light and dark themes.</p>
+            </div>
+            <button id="profileThemeToggle" class="toggle ${document.documentElement.dataset.theme === "dark" ? "active" : ""}" type="button" aria-label="Toggle dark mode"></button>
+          </div>
+          <button class="btn btn-outline btn-full" type="button" data-route="notifications">Notifications</button>
+          <button class="btn btn-navy btn-full" type="button" data-route="join">Join As Expert</button>
+          <button class="btn btn-danger btn-full" type="button" id="logoutButton">Logout</button>
+        </section>
+      `;
+
+      document.getElementById("profileThemeToggle").addEventListener("click", toggleTheme);
+      document.getElementById("logoutButton").addEventListener("click", logout);
+    }
+
+    function cancelBooking(id) {
+      const bookings = getStorage(STORAGE_KEYS.bookings, []);
+      const updated = bookings.map((booking) => {
+        if (booking.id === id) {
+          return { ...booking, status: "Cancelled" };
+        }
+        return booking;
+      });
+      setStorage(STORAGE_KEYS.bookings, updated);
+      showToast("Booking cancelled.");
+      renderBookings();
+    }
+
+    function login(email, password) {
+      const users = getStorage(STORAGE_KEYS.users, []);
+      let user = users.find((candidate) => candidate.email.toLowerCase() === email.toLowerCase() && candidate.password === password);
+
+      if (!user && email && password) {
+        user = {
+          id: "user-" + Date.now(),
+          name: email.split("@")[0] || "TalentBridge User",
+          email,
+          phone: "",
+          password,
+          talentScore: 74
+        };
+        users.push(user);
+        setStorage(STORAGE_KEYS.users, users);
+      }
+
+      if (!user) {
+        showToast("Enter an email and password to continue.");
+        return;
+      }
+
+      const session = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        talentScore: user.talentScore
+      };
+
+      setStorage(STORAGE_KEYS.session, session);
+      appState.currentUser = session;
+      showToast("Logged in successfully.");
+      navigate("home");
+    }
+
+    function signup(form) {
+      const users = getStorage(STORAGE_KEYS.users, []);
+      const user = {
+        id: "user-" + Date.now(),
+        name: form.querySelector("#signupName").value.trim(),
+        email: form.querySelector("#signupEmail").value.trim(),
+        phone: form.querySelector("#signupPhone").value.trim(),
+        password: form.querySelector("#signupPassword").value,
+        talentScore: 72
+      };
+
+      if (users.some((candidate) => candidate.email.toLowerCase() === user.email.toLowerCase())) {
+        showToast("This email already exists. Please log in.");
+        navigate("login");
+        return;
+      }
+
+      users.push(user);
+      setStorage(STORAGE_KEYS.users, users);
+      setStorage(STORAGE_KEYS.session, {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        talentScore: user.talentScore
+      });
+      showToast("Account created successfully.");
+      navigate("home");
+    }
+
+    function logout() {
+      localStorage.removeItem(STORAGE_KEYS.session);
+      appState.currentUser = null;
+      showToast("Logged out.");
+      navigate("login");
+    }
+
+    function applyTheme() {
+      const storedTheme = localStorage.getItem(STORAGE_KEYS.theme);
+      const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+      const theme = storedTheme || (prefersDark ? "dark" : "light");
+      document.documentElement.dataset.theme = theme;
+    }
+
+    function toggleTheme() {
+      const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = nextTheme;
+      localStorage.setItem(STORAGE_KEYS.theme, nextTheme);
+      document.querySelectorAll(".toggle").forEach((toggle) => {
+        toggle.classList.toggle("active", nextTheme === "dark");
+      });
+    }
+
+    function wireGlobalEvents() {
+      document.addEventListener("click", (event) => {
+        const menuToggle = event.target.closest("#headerMenuToggle");
+        const headerMenu = document.getElementById("headerMenu");
+
+        if (menuToggle) {
+          const isOpen = headerMenu.classList.toggle("show");
+          menuToggle.setAttribute("aria-expanded", String(isOpen));
+          return;
+        }
+
+        if (headerMenu && !event.target.closest("#headerMenu") && !event.target.closest("#headerMenuToggle")) {
+          headerMenu.classList.remove("show");
+          document.getElementById("headerMenuToggle")?.setAttribute("aria-expanded", "false");
+        }
+
+        const routeButton = event.target.closest("[data-route]");
+        if (routeButton) {
+          headerMenu?.classList.remove("show");
+          document.getElementById("headerMenuToggle")?.setAttribute("aria-expanded", "false");
+          navigate(routeButton.dataset.route);
+          return;
+        }
+
+        const profileButton = event.target.closest("[data-profile]");
+        if (profileButton) {
+          navigate("profileView", { expertId: profileButton.dataset.profile });
+          return;
+        }
+
+        const bookButton = event.target.closest("[data-book]");
+        if (bookButton) {
+          navigate("booking", { expertId: bookButton.dataset.book });
+          return;
+        }
+
+        const messageButton = event.target.closest("[data-message]");
+        if (messageButton) {
+          const conversations = getStorage(STORAGE_KEYS.messages, defaultMessages);
+          const existing = conversations.find((conversation) => conversation.expertId === messageButton.dataset.message);
+          if (existing) {
+            appState.selectedConversationId = existing.id;
+          } else {
+            const newConversation = {
+              id: "conv-" + Date.now(),
+              expertId: messageButton.dataset.message,
+              messages: [
+                {
+                  from: "expert",
+                  text: "Thanks for reaching out. How can I help?",
+                  time: "Now"
+                }
+              ]
+            };
+            conversations.unshift(newConversation);
+            setStorage(STORAGE_KEYS.messages, conversations);
+            appState.selectedConversationId = newConversation.id;
+          }
+          navigate("chat");
+          return;
+        }
+
+        const cancelButton = event.target.closest("[data-cancel]");
+        if (cancelButton) {
+          cancelBooking(cancelButton.dataset.cancel);
+          return;
+        }
+
+        const categoryButton = event.target.closest("[data-category]");
+        if (categoryButton) {
+          appState.selectedCategory = categoryButton.dataset.category;
+          appState.searchQuery = "";
+          navigate("search");
+          return;
+        }
+
+        const filterButton = event.target.closest("[data-filter]");
+        if (filterButton) {
+          appState.selectedCategory = filterButton.dataset.filter;
+          renderHireExperts();
+          return;
+        }
+
+        const conversationButton = event.target.closest("[data-conversation]");
+        if (conversationButton) {
+          appState.selectedConversationId = conversationButton.dataset.conversation;
+          renderChat();
+        }
+      });
+
+      document.getElementById("loginForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        login(
+          document.getElementById("loginEmail").value.trim(),
+          document.getElementById("loginPassword").value
+        );
+      });
+
+      document.getElementById("signupForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        signup(event.target);
+      });
+
+      document.querySelectorAll("[data-demo-login]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const users = getStorage(STORAGE_KEYS.users, []);
+          const demo = users[0];
+          setStorage(STORAGE_KEYS.session, {
+            id: demo.id,
+            name: demo.name,
+            email: demo.email,
+            phone: demo.phone,
+            talentScore: demo.talentScore
+          });
+          showToast(`${button.dataset.demoLogin === "google" ? "Google" : "Phone"} login simulated.`);
+          navigate("home");
+        });
+      });
+
+      document.getElementById("headerThemeToggle").addEventListener("click", toggleTheme);
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+          document.getElementById("headerMenu")?.classList.remove("show");
+          document.getElementById("headerMenuToggle")?.setAttribute("aria-expanded", "false");
+        }
+      });
+    }
+
+    function init() {
+      seedStorage();
+      applyTheme();
+      wireGlobalEvents();
+
+      window.setTimeout(() => {
+        splashScreen.classList.add("hidden");
+        window.setTimeout(() => {
+          splashScreen.style.display = "none";
+        }, 540);
+
+        if (currentUser()) {
+          navigate("home");
+        } else {
+          navigate("login");
+        }
+      }, 1500);
+    }
+
+    init();
+  </script>
+</body>
+</html>
